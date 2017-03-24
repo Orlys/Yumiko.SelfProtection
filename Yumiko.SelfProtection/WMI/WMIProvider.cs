@@ -4,14 +4,10 @@
     using System.Linq;
     using System.Management;
     using System.Collections;
-    using System.Runtime.InteropServices;
-
-
-    [ComVisible(false)]
+    
     public class WMIProvider : IReadOnlyDictionary<string, string>
     {
-
-        #region IDictionary<string,string>
+        #region IReadOnlyDictionary<string,string>
 
         private readonly IDictionary<string, string> wmi;
 

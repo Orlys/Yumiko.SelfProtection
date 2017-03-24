@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using System.Management;
 using System.Collections;
 using Yumiko.SelfProtection.WMI;
+using System.Security.Cryptography;
+using Yumiko.SelfProtection.Strobarried;
 
 namespace Yumiko.SelfProtection.Test
 {
@@ -13,12 +15,12 @@ namespace Yumiko.SelfProtection.Test
     {
         static void Main(string[] args)
         {
-            var wmi = new WMIProvider(WMISubject.Win32_BIOS);
-            foreach (var item in wmi)
-            {
-                Console.WriteLine(item);
-            }
+
+            Strobarried.Strobarried s = new Strobarried.Strobarried(new WMIProvider(WMISubject.Win32_AccountSID));
+            s.Compile();
             Console.ReadKey();   
         }
     }
+    
+    
 }
