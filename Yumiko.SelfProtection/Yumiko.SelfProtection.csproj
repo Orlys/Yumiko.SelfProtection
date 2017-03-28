@@ -29,20 +29,22 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup />
   <ItemGroup>
+    <Reference Include="Bind">
+      <HintPath>..\Bind.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Management" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Strobarried\Bind.cs" />
+    <Compile Include="Strobarried\Extension.cs" />
     <Compile Include="Strobarried\Strobarried.cs" />
     <Compile Include="WMI\WMIProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

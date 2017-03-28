@@ -4,12 +4,12 @@
     using System.Linq;
     using System.Management;
     using System.Collections;
-    
+
     public class WMIProvider : IReadOnlyDictionary<string, string>
     {
         #region IReadOnlyDictionary<string,string>
 
-        private readonly IDictionary<string, string> wmi;
+        private IDictionary<string, string> wmi;
 
         public string this[string key]
             => this.wmi[key];
@@ -39,10 +39,8 @@
 
         public WMISubject Subject { get; private set; }
 
-        public WMIProvider(WMISubject subject)
-        {
-            
-            this.wmi = new ManagementObjectSearcher($"select * from {this.Subject = subject}")
+        internal virtual void SetSubject(WMISubject subject)
+            => this.wmi = new ManagementObjectSearcher($"select * from { subject}")
                         .Get()
                         .Cast<ManagementObject>()
                         .First()
@@ -56,6 +54,10 @@
                                 : item.Value.ToString());
                             return x;
                         });
+
+        public WMIProvider(WMISubject subject)
+        {
+            this.SetSubject(this.Subject = subject);
         }
     }
 }
