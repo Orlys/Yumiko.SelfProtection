@@ -1,5 +1,8 @@
-﻿//#define Display_Error
-#define DynaLoading
+﻿/// Display Error In Console 
+//#define Display_Error
+
+/// Mode Switcher
+//#define DynaLoading
 
 #pragma warning disable CS0168
 namespace Yumiko.SelfProtection.Core
@@ -12,15 +15,17 @@ namespace Yumiko.SelfProtection.Core
     using Microsoft.CSharp;
     using System.Security.Cryptography;
     using System.IO;
-    using System.Reflection;
+    using System.Threading;
 
-#if !DynaLoading
+#if DynaLoading
+    using System.Reflection;
+#else
     using Token = Core.Bind;
     using Microsoft.CSharp.RuntimeBinder;
 #endif
 
     /// <summary>
-    /// 🍓 Strobarried(Strawberry) 🍓
+    /// 🍓🍓🍓 Strobarried (i.e.: Strawberry) / Powered by Viyrex 🍓🍓🍓
     /// </summary>
     public class Strobarried
     {
@@ -29,6 +34,7 @@ namespace Yumiko.SelfProtection.Core
         private CompilerParameters Option { get; set; }
         private IReadOnlyDictionary<string, string> Identifications { get; set; }
         public string FullPath { get; private set; }
+
         public Strobarried(IReadOnlyDictionary<string, string> identifications, string path = null, HashAlgorithm hash = null)
         {
             if (identifications == null)
@@ -46,9 +52,7 @@ namespace Yumiko.SelfProtection.Core
             this.FullPath = Path.GetFullPath(this.Option.OutputAssembly);
             this.Identifications = identifications;
         }
-
-
-
+        
         public bool Compile()
         {
             var errors = this.compiler.CompileAssemblyFromSource(this.Option, Encoding.UTF8.GetString(this.x3(this.Identifications))).Errors;
@@ -60,6 +64,7 @@ namespace Yumiko.SelfProtection.Core
 #endif
             return !errors.HasErrors;
         }
+
 
 #if DynaLoading
 
@@ -105,17 +110,21 @@ namespace Yumiko.SelfProtection.Core
             dynamic token = new Token();
             try
             {
-                if(token.Will_Be_Remove == 0xFF)
+                if (token.Will_Be_Remove == 0xFF)
                 {
                     //todo : Need Generate DLL and restart application
+
+
                 }
             }
-            catch(RuntimeBinderException e) when (e.Message.Contains(nameof(token.Will_Be_Remove)))
+            catch (RuntimeBinderException e) when (e.Message.Contains(nameof(token.Will_Be_Remove)))
             {
                 var t = typeof(Token);
+                var d = t.GetFields().Select(x => new { x.Name, Value = x.GetValue(token as Token).ToString() }).ToDictionary(x => x.Name, x => x.Value);
+
                 var value = string.Empty;
                 foreach (var item in raw.Identifications)
-                    if (token.TryGetValue(raw.x0(item.Key), out value))
+                    if (d.TryGetValue(raw.x0(item.Key), out value))
                         if (value == raw.x1(item.Value)) continue;
                         else return false;
                     else return false;
