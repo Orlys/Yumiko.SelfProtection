@@ -22,6 +22,7 @@ namespace Yumiko.SelfProtection.Core
 #else
     using Token = Core.Bind;
     using Microsoft.CSharp.RuntimeBinder;
+    using System.Diagnostics;
 #endif
 
     /// <summary>
@@ -114,7 +115,7 @@ namespace Yumiko.SelfProtection.Core
                 {
                     //todo : Need Generate DLL and restart application
 
-
+                    return false;
                 }
             }
             catch (RuntimeBinderException e) when (e.Message.Contains(nameof(token.Will_Be_Remove)))
