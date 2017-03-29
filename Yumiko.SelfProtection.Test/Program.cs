@@ -27,7 +27,7 @@ namespace Yumiko.SelfProtection.Test
             var codeBase = Assembly.GetExecutingAssembly().CodeBase;
             var uri = new UriBuilder(codeBase);
             var path = Uri.UnescapeDataString(uri.Path);
-            Console.WriteLine(path);
+            Console.WriteLine(path); 
 
 
             Console.WriteLine("-------------------------");
