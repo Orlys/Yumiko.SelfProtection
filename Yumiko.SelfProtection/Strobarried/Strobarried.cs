@@ -25,7 +25,7 @@ namespace Yumiko.SelfProtection.Core
 #endif
 
     /// <summary>
-    /// 🍓🍓🍓 Strobarried (i.e.: Strawberry) / Powered by Viyrex 🍓🍓🍓
+    /// 🍓🍓🍓 Strobarried (i.e.: Strawberry) / Powered by NoisserpXeger 🍓🍓🍓
     /// </summary>
     public class Strobarried
     {
