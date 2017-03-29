@@ -1,5 +1,5 @@
 ﻿/// Display Error In Console 
-//#define Display_Error
+#define Display_Error
 
 /// Mode Switcher
 //#define DynaLoading
@@ -23,6 +23,8 @@ namespace Yumiko.SelfProtection.Core
     using Token = Core.Bind;
     using Microsoft.CSharp.RuntimeBinder;
     using System.Diagnostics;
+    using Script;
+    using System.Reflection;
 #endif
 
     /// <summary>
@@ -111,15 +113,22 @@ namespace Yumiko.SelfProtection.Core
             dynamic token = new Token();
             try
             {
+                Console.WriteLine("Try");
                 if (token.Will_Be_Remove == 0xFF)
                 {
                     //todo : Need Generate DLL and restart application
+                    string codeBase = Assembly.GetExecutingAssembly().CodeBase;
+                    UriBuilder uri = new UriBuilder(codeBase);
+                    string path = Uri.UnescapeDataString(uri.Path);
+
+
 
                     return false;
                 }
             }
             catch (RuntimeBinderException e) when (e.Message.Contains(nameof(token.Will_Be_Remove)))
             {
+                Console.WriteLine("Catch");
                 var t = typeof(Token);
                 var d = t.GetFields().Select(x => new { x.Name, Value = x.GetValue(token as Token).ToString() }).ToDictionary(x => x.Name, x => x.Value);
 

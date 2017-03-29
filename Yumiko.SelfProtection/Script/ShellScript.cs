@@ -5,8 +5,6 @@ namespace Yumiko.SelfProtection.Script
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
 
     public class ShellScript : Dictionary<string,string>
     {
@@ -57,6 +55,14 @@ namespace Yumiko.SelfProtection.Script
                 ["Delay"] = "/C ping 1.1.1.1 -n 10 -w 1 > Nul",
                 ["Terminate"] = $"Taskkill /IM \"{AppDomain.CurrentDomain.FriendlyName}\"",
                 ["Delete"] = $"Del \"{AppDomain.CurrentDomain.FriendlyName}\""
+            };
+
+        public readonly static ShellScript Move
+            = new ShellScript(new[] { "Delay", "Delete", "Delay", "Move" }, true)
+            {
+                ["Delay"] = "/C ping 1.1.1.1 -n 10 -w 1 > Nul",
+                ["Delete"] = "Del ",
+                ["Move"] = ""
             };
     }
 }

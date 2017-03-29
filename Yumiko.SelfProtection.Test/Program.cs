@@ -24,26 +24,16 @@ namespace Yumiko.SelfProtection.Test
 
             var s = new Strobarried(new WMIProvider(WMISubject.Win32_BIOS));
 
-            var o = Strobarried.Validate(s);
-
-            Console.WriteLine(AppDomain.CurrentDomain.FriendlyName);
-
-            Script.ShellScript.Erase.Run();
+            var codeBase = Assembly.GetExecutingAssembly().CodeBase;
+            var uri = new UriBuilder(codeBase);
+            var path = Uri.UnescapeDataString(uri.Path);
+            Console.WriteLine(path);
 
 
             Console.WriteLine("-------------------------");
             Console.ReadKey();
         }
-
-        static void RunInShell()
-        {
-
-            var selfDelete = new ProcessStartInfo("cmd.exe", $"/C ping 1.1.1.1 -n 1 -w 1 > Nul & Taskkill /IM { AppDomain.CurrentDomain.FriendlyName } & ping 1.1.1.1 -n 1 -w 1 > Nul & Del \"{AppDomain.CurrentDomain.FriendlyName}\"");
-            selfDelete.WindowStyle = ProcessWindowStyle.Hidden;
-            selfDelete.CreateNoWindow = true;
-            Process.Start(selfDelete);
-            Environment.Exit(0);
-        }
+        
     } 
     
     
