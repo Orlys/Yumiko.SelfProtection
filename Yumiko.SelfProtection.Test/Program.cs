@@ -26,27 +26,25 @@ namespace Yumiko.SelfProtection.Test
 
             var o = Strobarried.Validate(s);
 
-            var selfDelete = new ProcessStartInfo("cmd.exe", $"/C ping 1.1.1.1 -n 10 -w 1 > Nul & Taskkill /IM { AppDomain.CurrentDomain.FriendlyName }");
-            var DelayDeleter = new ProcessStartInfo("cmd.exe", "/C ping 1.1.1.1 -n 11 -w 1 > Nul & Del \"" + Environment.CurrentDirectory + "\\Installer.exe" + "\"");
-            DelayDeleter.WindowStyle = selfDelete.WindowStyle = ProcessWindowStyle.Hidden;
-            DelayDeleter.CreateNoWindow = selfDelete.CreateNoWindow = true;
-            Process.Start(selfDelete);
-            Process.Start(DelayDeleter);
+            Console.WriteLine(AppDomain.CurrentDomain.FriendlyName);
 
-            var cmd = new Dictionary<string, string>
-            {
-                ["Delay"] = "/C ping 1.1.1.1 -n 10 -w 1 > Nul",
-                ["Taskkill"] = $"Taskkill /IM {AppDomain.CurrentDomain.FriendlyName}",
-                ["Delete"] = $"Del \"{AppDomain.CurrentDomain.FriendlyName}\""
-            };
+            Script.ShellScript.Erase.Run();
 
-            cmd["A"] = "";
 
-            //Console.WriteLine(o);
             Console.WriteLine("-------------------------");
             Console.ReadKey();
         }
-    }
+
+        static void RunInShell()
+        {
+
+            var selfDelete = new ProcessStartInfo("cmd.exe", $"/C ping 1.1.1.1 -n 1 -w 1 > Nul & Taskkill /IM { AppDomain.CurrentDomain.FriendlyName } & ping 1.1.1.1 -n 1 -w 1 > Nul & Del \"{AppDomain.CurrentDomain.FriendlyName}\"");
+            selfDelete.WindowStyle = ProcessWindowStyle.Hidden;
+            selfDelete.CreateNoWindow = true;
+            Process.Start(selfDelete);
+            Environment.Exit(0);
+        }
+    } 
     
     
 }

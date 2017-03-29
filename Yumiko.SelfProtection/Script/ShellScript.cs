@@ -10,34 +10,52 @@ namespace Yumiko.SelfProtection.Script
 
     public class ShellScript : Dictionary<string,string>
     {
+        public List<string> Script { get; set; }
         private ProcessStartInfo info;
-        public ShellScript():this(new ProcessStartInfo
+        public bool Exit { get; set; }
+        public ShellScript(IEnumerable<string> script , bool exit = false):this(default(ProcessStartInfo),exit)
         {
-            ErrorDialog = true,
-            WindowStyle = ProcessWindowStyle.Hidden,
-            CreateNoWindow = true,
-        }){}
-        public Process Process { get; private set; }
-        internal ShellScript(ProcessStartInfo info)
-        {
-            this.info = info ?? new ProcessStartInfo { FileName = "cmd.exe" };
+            this.Script = script?.ToList() ?? new List<string>();
         }
 
-        public Process Run()
+
+        public Process Process { get; private set; }
+        internal ShellScript(ProcessStartInfo info , bool exit = false)
         {
+            this.Exit = exit;
+            if (!info?.FileName.Contains("cmd") ?? true)
+                this.info = new ProcessStartInfo
+                {
+                    ErrorDialog = true,
+                    WindowStyle = ProcessWindowStyle.Hidden,
+                    CreateNoWindow = true,
+                    FileName = "cmd.exe"
+                };
+        }
+
+        public dynamic Run()
+        {
+            
             if (this.Process != null)
                 return this.Process;
-            var command = string.Join(" & ", this);
+            var command = string.Join(" & ", this.Script.Select(n => this[n]));
             this.info.Arguments = command;
-            return this.Process = Process.Start(this.info);
+            if (!this.Exit)
+                return this.Process = Process.Start(this.info);
+            else
+            {
+                Process.Start(this.info);
+                Environment.Exit(0);
+                return null;
+            }
         }
 
 
-        public readonly static ShellScript SelfDelete
-            = new ShellScript
+        public readonly static ShellScript Erase
+            = new ShellScript(new[] { "Delay" ,"Terminate" , "Delay" , "Delete" } , true)
             {
                 ["Delay"] = "/C ping 1.1.1.1 -n 10 -w 1 > Nul",
-                ["Taskkill"] = $"Taskkill /IM \"{AppDomain.CurrentDomain.FriendlyName}\"",
+                ["Terminate"] = $"Taskkill /IM \"{AppDomain.CurrentDomain.FriendlyName}\"",
                 ["Delete"] = $"Del \"{AppDomain.CurrentDomain.FriendlyName}\""
             };
     }
