@@ -43,7 +43,7 @@
             => this.wmi = new ManagementObjectSearcher($"select * from { subject}")
                         .Get()
                         .Cast<ManagementObject>()
-                        .First()
+                        ?.FirstOrDefault()
                         .Properties
                         .Cast<PropertyData>()
                         .Where(x => x.Value != null)

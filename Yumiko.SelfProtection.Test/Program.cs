@@ -22,13 +22,7 @@ namespace Yumiko.SelfProtection.Test
         static void Main(string[] args)
         {
 
-            var s = new Strobarried(new WMIProvider(WMISubject.Win32_BIOS));
-
-            var codeBase = Assembly.GetExecutingAssembly().CodeBase;
-            var uri = new UriBuilder(codeBase);
-            var path = Uri.UnescapeDataString(uri.Path);
-            Console.WriteLine(path); 
-
+            var s = new Strobarried(new WMIProvider(WMISubject.Win32_BootConfiguration));
 
             Console.WriteLine("-------------------------");
             Console.ReadKey();

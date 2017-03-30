@@ -4,6 +4,9 @@
 /// Mode Switcher
 //#define DynaLoading
 
+/// Generate Empty DLL
+//#define CreateNewDLL
+
 #pragma warning disable CS0168
 namespace Yumiko.SelfProtection.Core
 {
@@ -38,7 +41,7 @@ namespace Yumiko.SelfProtection.Core
         private IReadOnlyDictionary<string, string> Identifications { get; set; }
         public string FullPath { get; private set; }
 
-        public Strobarried(IReadOnlyDictionary<string, string> identifications, string path = null, HashAlgorithm hash = null)
+        public Strobarried(IReadOnlyDictionary<string, string> identifications, HashAlgorithm hash = null)
         {
             if (identifications == null)
                 throw new ArgumentNullException(nameof(identifications));
@@ -49,25 +52,71 @@ namespace Yumiko.SelfProtection.Core
             {
                 GenerateExecutable = false,
                 GenerateInMemory = false,
-                OutputAssembly = path ?? "Bind.dll",
                 IncludeDebugInformation = false,
             };
-            this.FullPath = Path.GetFullPath(this.Option.OutputAssembly);
+            this.FullPath = Path.GetFullPath("Bind.dll");
             this.Identifications = identifications;
         }
-        
+
+#if CreateNewDLL
         public bool Compile()
         {
+            this.Option.OutputAssembly = this.FullPath;
+            var errors = this.compiler.CompileAssemblyFromSource(this.Option, Encoding.UTF8.GetString(new byte[]
+            {
+                0x6E, 0x61, 0x6D, 0x65, 0x73, 0x70, 0x61, 0x63,
+                0x65, 0x20, 0x59, 0x75, 0x6D, 0x69, 0x6B, 0x6F,
+                0x2E, 0x53, 0x65, 0x6C, 0x66, 0x50, 0x72, 0x6F,
+                0x74, 0x65, 0x63, 0x74, 0x69, 0x6F, 0x6E, 0x2E,
+                0x43, 0x6F, 0x72, 0x65, 0x7B, 0x75, 0x73, 0x69,
+                0x6E, 0x67, 0x20, 0x53, 0x79, 0x73, 0x74, 0x65,
+                0x6D, 0x3B, 0x70, 0x75, 0x62, 0x6C, 0x69, 0x63,
+                0x20, 0x70, 0x61, 0x72, 0x74, 0x69, 0x61, 0x6C,
+                0x20, 0x63, 0x6C, 0x61, 0x73, 0x73, 0x20, 0x42,
+                0x69, 0x6E, 0x64, 0x3A, 0x4D, 0x61, 0x72, 0x73,
+                0x68, 0x61, 0x6C, 0x42, 0x79, 0x52, 0x65, 0x66,
+                0x4F, 0x62, 0x6A, 0x65, 0x63, 0x74, 0x7B
+            }
+            .Concat(x5())
+            .Concat(this.Identifications
+                .SelectMany(x =>
+                    x2(x0(x.Key), x7)))
+            .Concat(x5())
+            .Concat(new byte[]
+            {
+                0x7D, 0x7D
+            }).ToArray())).Errors;
+
+#if Display_Error
+            if (errors.HasErrors)
+                errors.Cast<CompilerError>().ToList().ForEach(x => Console.WriteLine(x));
+#endif
+            return !errors.HasErrors;
+        }
+#else
+
+        public bool Compile()
+        {
+            this.Option.OutputAssembly = this.FullPath;
             var errors = this.compiler.CompileAssemblyFromSource(this.Option, Encoding.UTF8.GetString(this.x3(this.Identifications))).Errors;
 
 #if Display_Error
             if (errors.HasErrors)
-                foreach (var item in errors)
-                    Console.WriteLine(item);
+                errors.Cast<CompilerError>().ToList().ForEach(x => Console.WriteLine(x));
 #endif
             return !errors.HasErrors;
         }
 
+        [Flags]
+        public enum Evaluation
+        {
+            False = 1,
+            True = 2,
+            Error = 0,
+#if !DynaLoading
+            Restart = False | True
+#endif
+        }
 
 #if DynaLoading
 
@@ -76,8 +125,7 @@ namespace Yumiko.SelfProtection.Core
         /// </summary>
         /// <param name="raw"></param>
         /// <param name="dllPath"></param>
-        /// <returns></returns>
-        public static bool Validate(Strobarried raw, string dllPath)
+        public static Evaluation Validate(Strobarried raw, string dllPath)
         {
             try
             {
@@ -91,63 +139,78 @@ namespace Yumiko.SelfProtection.Core
                 foreach (var item in raw.Identifications)
                     if (fromDll.TryGetValue(raw.x0(item.Key), out value))
                         if (value == raw.x1(item.Value)) continue;
-                        else return false;
-                    else return false;
-                return true;
+                        else return  Evaluation.False;
+                    else return Evaluation.False;
+                return Evaluation.True;
             }
             catch (Exception e)
             {
 #if Display_Error
                 Console.WriteLine(e.Message);
 #endif
-                return false;
+                return Evaluation.Error;
             }
         }
 #else
         /// <summary>
         /// Pre-binding via reference dll
         /// </summary>
+        /// <param name="raw"></param>
         /// <returns></returns>
-        public static bool Validate(Strobarried raw)
+        public static Evaluation Validate(Strobarried raw)
         {
-            dynamic token = new Token();
+            var token = new Token();
+            var fields = token.GetType().GetFields();
+
             try
             {
-                Console.WriteLine("Try");
-                if (token.Will_Be_Remove == 0xFF)
+
+                //All of the values were empty 
+                if (fields.All(x => x.GetValue(token).ToString().Equals(raw.x7)))
                 {
-                    //todo : Need Generate DLL and restart application
-                    string codeBase = Assembly.GetExecutingAssembly().CodeBase;
-                    UriBuilder uri = new UriBuilder(codeBase);
-                    string path = Uri.UnescapeDataString(uri.Path);
-
-
-
-                    return false;
+                    //generate dll 
+                    var origin = raw.FullPath;
+                    raw.FullPath += ".tmp";
+                    if (raw.Compile())
+                    {
+                        var script = new ShellScript(new[] { "Delay", "Terminate", "Delay", "Delete", "SelectDir", "Rename" }, true)
+                        {
+                            ["Delay"] = "/C ping 1.1.1.1 -n 1 -w 1 > Nul",
+                            ["Terminate"] = $"taskkill /IM \"{AppDomain.CurrentDomain.FriendlyName}\"",
+                            ["Delete"] = $"del /f \"{origin}\"",
+                            ["SelectDir"] = $"cd {Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}",
+                            ["Rename"] = $"ren \"{"Bind.dll.tmp"}\" \"{"Bind.dll"}\""
+                        };
+                        script.Run();
+                    }
+                    else
+                        throw new Exception("Access denied");
+                    return Evaluation.Restart;
+                }
+                //validate all of the values are currect or not
+                else
+                {
+                    var d = fields.Select(x => new { x.Name, Value = x.GetValue(token as Token).ToString() }).ToDictionary(x => x.Name, x => x.Value);
+                    var value = string.Empty;
+                    foreach (var item in raw.Identifications)
+                        if (d.TryGetValue(raw.x0(item.Key), out value))
+                            if (value == raw.x1(item.Value)) continue;
+                            else return Evaluation.False;
+                        else return Evaluation.False;
+                    return Evaluation.True;
                 }
             }
-            catch (RuntimeBinderException e) when (e.Message.Contains(nameof(token.Will_Be_Remove)))
-            {
-                Console.WriteLine("Catch");
-                var t = typeof(Token);
-                var d = t.GetFields().Select(x => new { x.Name, Value = x.GetValue(token as Token).ToString() }).ToDictionary(x => x.Name, x => x.Value);
-
-                var value = string.Empty;
-                foreach (var item in raw.Identifications)
-                    if (d.TryGetValue(raw.x0(item.Key), out value))
-                        if (value == raw.x1(item.Value)) continue;
-                        else return false;
-                    else return false;
-                return true;
-            }
-            catch(Exception e)
+            catch (Exception e)
             {
 #if Display_Error
                 Console.WriteLine(e.Message);
 #endif
+                return Evaluation.Error;
             }
-            return false;
         }
+
+#endif
+        
 #endif
 
         #region x
@@ -205,8 +268,9 @@ namespace Yumiko.SelfProtection.Core
             return b.SelectMany(x => x);
         }
 
+        private string x7 => x1("");
 
-        #endregion
+#endregion
     }
 }
 

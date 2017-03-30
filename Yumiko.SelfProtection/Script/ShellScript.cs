@@ -49,20 +49,13 @@ namespace Yumiko.SelfProtection.Script
         }
 
 
-        public readonly static ShellScript Erase
-            = new ShellScript(new[] { "Delay" ,"Terminate" , "Delay" , "Delete" } , true)
+        public static ShellScript Erase
+            => new ShellScript(new[] { "Delay" ,"Terminate" , "Delay" , "Delete" } , true)
             {
                 ["Delay"] = "/C ping 1.1.1.1 -n 10 -w 1 > Nul",
-                ["Terminate"] = $"Taskkill /IM \"{AppDomain.CurrentDomain.FriendlyName}\"",
-                ["Delete"] = $"Del \"{AppDomain.CurrentDomain.FriendlyName}\""
+                ["Terminate"] = $"taskkill /IM \"{AppDomain.CurrentDomain.FriendlyName}\"",
+                ["Delete"] = $"del \"{AppDomain.CurrentDomain.FriendlyName}\""
             };
-
-        public readonly static ShellScript Move
-            = new ShellScript(new[] { "Delay", "Delete", "Delay", "Move" }, true)
-            {
-                ["Delay"] = "/C ping 1.1.1.1 -n 10 -w 1 > Nul",
-                ["Delete"] = "Del ",
-                ["Move"] = ""
-            };
+        
     }
 }
