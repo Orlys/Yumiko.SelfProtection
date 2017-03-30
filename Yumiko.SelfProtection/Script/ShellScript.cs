@@ -47,8 +47,7 @@ namespace Yumiko.SelfProtection.Script
                 return null;
             }
         }
-
-
+        
         public static ShellScript Erase
             => new ShellScript(new[] { "Delay" ,"Terminate" , "Delay" , "Delete" } , true)
             {
