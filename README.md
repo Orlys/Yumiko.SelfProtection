@@ -41,4 +41,4 @@
 ## License
 MIT
     
-[Strobarried.cs]:<https://github.com/0x0001F36D/Yumiko.SelfProtection/blob/master/Yumiko.SelfProtection/Strobarried/Strobarried.cs "Strobarried.cs">
+[Strobarried.cs]:<https://github.com/0x0001F36D/Yumiko.SelfProtection/blob/master/Yumiko.SelfProtection/Strobarried/Strobarried.cs>
