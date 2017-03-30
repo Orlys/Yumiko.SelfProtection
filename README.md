@@ -1,5 +1,5 @@
 # Yumiko.SelfProtection
-
+<hr/>
 - ## Description
   - ### First (Generate new DLL for validation equipment)
     🍓 Uncomment Preprocessor Directives in [Strobarried.cs] like this
@@ -18,8 +18,8 @@
     strobarried.Compile();
     ```
   
-    🍓Press F5 to compile the project and now you can see the **Bind.dll** in directory after compiled
-
+    🍓Compile the project and now you can see the **Bind.dll** in directory after compiled
+<br/>
   - ### Second (Validate equipment)
     🍓 Comment Preprocessor Directives in [Strobarried.cs] like this
     ```C#
