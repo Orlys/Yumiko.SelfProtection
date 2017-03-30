@@ -1,13 +1,13 @@
 ﻿/// Display Error In Console 
 #define Display_Error
 
-/// Mode Switcher
-//#define DynaLoading
-
 /// Generate Empty DLL
-//#define CreateNewDLL
+#define Create_New
 
-#pragma warning disable CS0168
+/// Mode Switcher
+#define Bind_In_Runtime
+
+#pragma warning disable 0168
 namespace Yumiko.SelfProtection.Core
 {
     using System;
@@ -18,29 +18,27 @@ namespace Yumiko.SelfProtection.Core
     using Microsoft.CSharp;
     using System.Security.Cryptography;
     using System.IO;
-    using System.Threading;
 
-#if DynaLoading
+#if (!Create_New && Bind_In_Runtime)
     using System.Reflection;
-#else
-    using Token = Core.Bind;
-    using Microsoft.CSharp.RuntimeBinder;
-    using System.Diagnostics;
+#elif (!Create_New && Bind_In_Runtime)
+    using Token = Bind;
     using Script;
     using System.Reflection;
 #endif
 
     /// <summary>
-    /// 🍓🍓🍓 Strobarried (i.e.: Strawberry) / Powered by NoisserpXeger 🍓🍓🍓
+    /// 🍓🍓🍓 Strobarried (i.e.: Strawberry) 🍀 Powered by NoisserpXeger 🍓🍓🍓
     /// </summary>
-    public class Strobarried
+    public sealed class Strobarried
     {
+        #region Declaration
         internal readonly HashAlgorithm Hash;
         private CSharpCodeProvider compiler;
         private CompilerParameters Option { get; set; }
         private IReadOnlyDictionary<string, string> Identifications { get; set; }
         public string FullPath { get; private set; }
-        
+
         public Strobarried(IReadOnlyDictionary<string, string> identifications, HashAlgorithm hash = null)
         {
             if (identifications == null)
@@ -57,8 +55,17 @@ namespace Yumiko.SelfProtection.Core
             this.FullPath = Path.GetFullPath("Bind.dll");
             this.Identifications = identifications;
         }
+        private void displayError(CompilerErrorCollection errors)
+        {
+#if Display_Error
+            if (errors.HasErrors)
+                errors.Cast<CompilerError>().ToList().ForEach(x => Console.WriteLine(x));
+#endif
+        }
+        #endregion
 
-#if CreateNewDLL
+#if Create_New
+        #region Non-Compiled
         public bool Compile()
         {
             this.Option.OutputAssembly = this.FullPath;
@@ -72,24 +79,18 @@ namespace Yumiko.SelfProtection.Core
             {
                 0x7D, 0x7D
             }).ToArray())).Errors;
-
-#if Display_Error
-            if (errors.HasErrors)
-                errors.Cast<CompilerError>().ToList().ForEach(x => Console.WriteLine(x));
-#endif
+            this.displayError(errors);
             return !errors.HasErrors;
         }
+        #endregion
 #else
+        #region Compiled
 
         public bool Compile()
         {
             this.Option.OutputAssembly = this.FullPath;
             var errors = this.compiler.CompileAssemblyFromSource(this.Option, Encoding.UTF8.GetString(this.x3(this.Identifications))).Errors;
-
-#if Display_Error
-            if (errors.HasErrors)
-                errors.Cast<CompilerError>().ToList().ForEach(x => Console.WriteLine(x));
-#endif
+            this.displayError(errors);
             return !errors.HasErrors;
         }
 
@@ -99,15 +100,14 @@ namespace Yumiko.SelfProtection.Core
             False = 1,
             True = 2,
             Error = 0,
-#if !DynaLoading
+#if !Bind_In_Runtime
             Restart = False | True
 #endif
         }
-
-#if DynaLoading
-
+#if (Bind_In_Runtime && !Create_New)
+        #region Runtime-binding
         /// <summary>
-        /// Dynamic-binding from path
+        /// Runtime-binding from path
         /// </summary>
         /// <param name="raw"></param>
         /// <param name="dllPath"></param>
@@ -137,7 +137,9 @@ namespace Yumiko.SelfProtection.Core
                 return Evaluation.Error;
             }
         }
-#else
+        #endregion
+#elif (!Bind_In_Runtime && !Create_New)
+        #region Pre-binding
         /// <summary>
         /// Pre-binding via reference dll
         /// </summary>
@@ -194,12 +196,12 @@ namespace Yumiko.SelfProtection.Core
                 return Evaluation.Error;
             }
         }
-
+        #endregion
 #endif
-        
+        #endregion
 #endif
 
-        #region x
+        #region Obfuscation
         private string x0(string rawKey)
             => $"_0x0{ Math.Abs(rawKey.GetHashCode()) }";
 
@@ -242,7 +244,7 @@ namespace Yumiko.SelfProtection.Core
 
         private string x7 => x1("");
 
-        private readonly byte[] x8 =
+        private byte[] x8 =>
             new byte[]
             {
                 0x6E, 0x61, 0x6D, 0x65, 0x73, 0x70, 0x61, 0x63,
