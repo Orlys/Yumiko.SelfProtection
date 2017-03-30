@@ -56,6 +56,12 @@ namespace Yumiko.SelfProtection.Core
                 errors.Cast<CompilerError>().ToList().ForEach(x => Console.WriteLine(x));
 #endif
         }
+        private void displayError(string errorMsg)
+        {
+#if Display_Error
+            Console.WriteLine(errorMsg);
+#endif
+        }
         #endregion
 
 #if Create_New
@@ -93,9 +99,9 @@ namespace Yumiko.SelfProtection.Core
         [Flags]
         public enum Evaluation
         {
+            Error = 0,
             False = 1,
             True = 2,
-            Error = 0,
             Restart = False | True
         }
 
@@ -145,15 +151,14 @@ namespace Yumiko.SelfProtection.Core
                     else return Evaluation.False;
                 return Evaluation.True;
             }
-            catch(FileNotFoundException)
+            catch(FileNotFoundException e)
             {
+                raw.displayError(e.Message);
                 return Evaluation.False;
             }
             catch (Exception e)
             {
-#if Display_Error
-                Console.WriteLine(e.Message);
-#endif
+                raw.displayError(e.Message);
                 return Evaluation.Error;
             }
         }

@@ -11,7 +11,7 @@ namespace Yumiko.SelfProtection.Test
         static void Main(string[] args)
         {
 
-            var s = new Strobarried(new WMIProvider(WMISubject.Win32_1394Controller));
+            var s = new Strobarried(new WMIProvider(WMISubject.Win32_BIOS));
 
             var result = Strobarried.Validate(s);
             Console.WriteLine(result);
