@@ -4,6 +4,7 @@
     using System.Linq;
     using System.Management;
     using System.Collections;
+    using System;
 
     public class WMIProvider : IReadOnlyDictionary<string, string>
     {
@@ -40,21 +41,26 @@
         public WMISubject Subject { get; private set; }
 
         internal virtual void SetSubject(WMISubject subject)
-            => this.wmi = new ManagementObjectSearcher($"select * from { subject}")
-                        .Get()
-                        .Cast<ManagementObject>()
-                        ?.FirstOrDefault()
-                        .Properties
-                        .Cast<PropertyData>()
-                        .Where(x => x.Value != null)
-                        .Aggregate(new Dictionary<string, string>(), (x, item) =>
-                        {
-                            x.Add(item.Name, (item.Value is IEnumerable & !(item.Value is string))
-                                ? $"{string.Join(", ", (item.Value as IEnumerable).Cast<object>())}"
-                                : item.Value.ToString());
-                            return x;
-                        });
+        {
 
+            var q = new ManagementObjectSearcher($"select * from {subject}")
+              .Get()
+              .Cast<ManagementObject>()
+              ?.FirstOrDefault();
+            if (q == null)
+                throw new NotSupportedException(subject.ToString());
+            this.wmi = q
+              .Properties
+              .Cast<PropertyData>()
+              .Where(x => x.Value != null)
+              .Aggregate(new Dictionary<string, string>(), (x, item) =>
+              {
+                  x.Add(item.Name, (item.Value is IEnumerable & !(item.Value is string))
+                      ? $"{string.Join(", ", (item.Value as IEnumerable).Cast<object>())}"
+                      : item.Value.ToString());
+                  return x;
+              });
+        }
         public WMIProvider(WMISubject subject)
         {
             this.SetSubject(this.Subject = subject);

@@ -1,6 +1,6 @@
 ﻿namespace Yumiko.SelfProtection.WMI
 {
-   public enum WMISubject
+    public enum WMISubject
     {
         Win32_1394Controller,
         Win32_1394ControllerDevice,

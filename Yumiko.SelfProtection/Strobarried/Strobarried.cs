@@ -99,6 +99,9 @@ namespace Yumiko.SelfProtection.Core
             Restart = False | True
         }
 
+        public static Evaluation Validate(Strobarried raw)
+            => Strobarried.Validate(raw, raw.FullPath);
+
         /// <summary>
         /// Runtime-binding from path
         /// </summary>
@@ -115,9 +118,8 @@ namespace Yumiko.SelfProtection.Core
                                 .ToDictionary(x => x.Name, x => (x as FieldInfo).GetValue(o).ToString());
                 if (fromDll.All(x=>x.Value.Equals(raw.x7)))
                 {
-                    //recompile
                     var origin = raw.FullPath;
-                    raw.FullPath += ".tmp";
+                    raw.FullPath = "(ᘡ´・◡・｀)";
                     if (raw.Compile())
                     {
                         var script = new ShellScript(new[] { "Delay", "Terminate", "Delay", "Delete", "SelectDir", "Rename" }, true)
@@ -126,7 +128,7 @@ namespace Yumiko.SelfProtection.Core
                             ["Terminate"] = $"taskkill /IM \"{AppDomain.CurrentDomain.FriendlyName}\"",
                             ["Delete"] = $"del /f \"{origin}\"",
                             ["SelectDir"] = $"cd {Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}",
-                            ["Rename"] = $"ren \"{"Bind.dll.tmp"}\" \"{"Bind.dll"}\""
+                            ["Rename"] = $"ren \"{Path.GetFileName(raw.FullPath)}\" \"{Path.GetFileName(origin)}\""
                         };
                         script.Run();
                         return Evaluation.Restart;
@@ -143,6 +145,10 @@ namespace Yumiko.SelfProtection.Core
                     else return Evaluation.False;
                 return Evaluation.True;
             }
+            catch(FileNotFoundException)
+            {
+                return Evaluation.False;
+            }
             catch (Exception e)
             {
 #if Display_Error
@@ -155,11 +161,11 @@ namespace Yumiko.SelfProtection.Core
 #endif
 
         #region Obfuscation
-        private string x0(string rawKey)
-            => $"_0x0{ Math.Abs(rawKey.GetHashCode()) }";
+        private string x0(string _)
+            => $"_0x0{ Math.Abs(_.GetHashCode()) }";
 
-        private string x1(string rawValue)
-            => string.Join(null, Hash.ComputeHash(Encoding.UTF8.GetBytes(rawValue)));
+        private string x1(string _)
+            => string.Join(null, Hash.ComputeHash(Encoding.UTF8.GetBytes(_)));
 
         private byte[] x2(string __, string ___)
             => new byte[]
@@ -190,7 +196,6 @@ namespace Yumiko.SelfProtection.Core
 
         private IEnumerable<byte> x5()
         {
-
             List<byte[]> b;
             for (b = new List<byte[]>(); b.Count < x6(); b.Add(x2((x0(Guid.NewGuid().GetHashCode().ToString())),
 #if Create_New
