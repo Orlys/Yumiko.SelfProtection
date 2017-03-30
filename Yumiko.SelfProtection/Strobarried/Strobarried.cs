@@ -2,10 +2,7 @@
 #define Display_Error
 
 /// Generate Empty DLL
-#define Create_New
-
-/// Mode Switcher
-#define Bind_In_Runtime
+//#define Create_New
 
 #pragma warning disable 0168
 namespace Yumiko.SelfProtection.Core
@@ -19,12 +16,9 @@ namespace Yumiko.SelfProtection.Core
     using System.Security.Cryptography;
     using System.IO;
 
-#if (!Create_New && Bind_In_Runtime)
+#if !Create_New
     using System.Reflection;
-#elif (!Create_New && Bind_In_Runtime)
-    using Token = Bind;
-    using Script;
-    using System.Reflection;
+    using Yumiko.SelfProtection.Script;
 #endif
 
     /// <summary>
@@ -66,6 +60,8 @@ namespace Yumiko.SelfProtection.Core
 
 #if Create_New
         #region Non-Compiled
+
+
         public bool Compile()
         {
             this.Option.OutputAssembly = this.FullPath;
@@ -74,7 +70,7 @@ namespace Yumiko.SelfProtection.Core
             .Concat(this.Identifications
                 .SelectMany(x =>
                     x2(x0(x.Key), x7)))
-            .Concat(x5())
+              .Concat(x5())
             .Concat(new byte[]
             {
                 0x7D, 0x7D
@@ -100,12 +96,9 @@ namespace Yumiko.SelfProtection.Core
             False = 1,
             True = 2,
             Error = 0,
-#if !Bind_In_Runtime
             Restart = False | True
-#endif
         }
-#if (Bind_In_Runtime && !Create_New)
-        #region Runtime-binding
+
         /// <summary>
         /// Runtime-binding from path
         /// </summary>
@@ -120,43 +113,9 @@ namespace Yumiko.SelfProtection.Core
                 var fromDll = t.GetMembers()
                                 .Where(x => x.MemberType == MemberTypes.Field)
                                 .ToDictionary(x => x.Name, x => (x as FieldInfo).GetValue(o).ToString());
-
-                var value = string.Empty;
-                foreach (var item in raw.Identifications)
-                    if (fromDll.TryGetValue(raw.x0(item.Key), out value))
-                        if (value == raw.x1(item.Value)) continue;
-                        else return  Evaluation.False;
-                    else return Evaluation.False;
-                return Evaluation.True;
-            }
-            catch (Exception e)
-            {
-#if Display_Error
-                Console.WriteLine(e.Message);
-#endif
-                return Evaluation.Error;
-            }
-        }
-        #endregion
-#elif (!Bind_In_Runtime && !Create_New)
-        #region Pre-binding
-        /// <summary>
-        /// Pre-binding via reference dll
-        /// </summary>
-        /// <param name="raw"></param>
-        /// <returns></returns>
-        public static Evaluation Validate(Strobarried raw)
-        {
-            var token = new Token();
-            var fields = token.GetType().GetFields();
-
-            try
-            {
-
-                //All of the values were empty 
-                if (fields.All(x => x.GetValue(token).ToString().Equals(raw.x7)))
+                if (fromDll.All(x=>x.Value.Equals(raw.x7)))
                 {
-                    //generate dll 
+                    //recompile
                     var origin = raw.FullPath;
                     raw.FullPath += ".tmp";
                     if (raw.Compile())
@@ -175,18 +134,14 @@ namespace Yumiko.SelfProtection.Core
                     else
                         throw new Exception("Access denied");
                 }
-                //validate all of the values are currect or not
-                else
-                {
-                    var d = fields.Select(x => new { x.Name, Value = x.GetValue(token as Token).ToString() }).ToDictionary(x => x.Name, x => x.Value);
-                    var value = string.Empty;
-                    foreach (var item in raw.Identifications)
-                        if (d.TryGetValue(raw.x0(item.Key), out value))
-                            if (value == raw.x1(item.Value)) continue;
-                            else return Evaluation.False;
-                        else return Evaluation.False;
-                    return Evaluation.True;
-                }
+
+                var value = string.Empty;
+                foreach (var item in raw.Identifications)
+                    if (fromDll.TryGetValue(raw.x0(item.Key), out value))
+                        if (value == raw.x1(item.Value)) continue;
+                        else return  Evaluation.False;
+                    else return Evaluation.False;
+                return Evaluation.True;
             }
             catch (Exception e)
             {
@@ -196,8 +151,6 @@ namespace Yumiko.SelfProtection.Core
                 return Evaluation.Error;
             }
         }
-        #endregion
-#endif
         #endregion
 #endif
 
@@ -237,8 +190,15 @@ namespace Yumiko.SelfProtection.Core
 
         private IEnumerable<byte> x5()
         {
+
             List<byte[]> b;
-            for (b = new List<byte[]>(); b.Count < x6(); b.Add(x2((x0(Guid.NewGuid().GetHashCode().ToString())), x1(Guid.NewGuid().GetHashCode().ToString())))) ;
+            for (b = new List<byte[]>(); b.Count < x6(); b.Add(x2((x0(Guid.NewGuid().GetHashCode().ToString())),
+#if Create_New
+             x7
+#else
+             x1(Guid.NewGuid().GetHashCode().ToString())
+#endif
+             ))) ;
             return b.SelectMany(x => x);
         }
 

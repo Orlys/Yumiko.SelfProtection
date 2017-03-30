@@ -24,6 +24,9 @@ namespace Yumiko.SelfProtection.Test
 
             var s = new Strobarried(new WMIProvider(WMISubject.Win32_BootConfiguration));
 
+            var result = Strobarried.Validate(s, @"E:\Git\Yumiko.SelfProtection\Yumiko.SelfProtection.Test\bin\Debug\Bind.dll");
+            Console.WriteLine(result);
+
             Console.WriteLine("-------------------------");
             Console.ReadKey();
         }
