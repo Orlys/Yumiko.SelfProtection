@@ -170,10 +170,10 @@ namespace Yumiko.SelfProtection.Core
                             ["Rename"] = $"ren \"{"Bind.dll.tmp"}\" \"{"Bind.dll"}\""
                         };
                         script.Run();
+                        return Evaluation.Restart;
                     }
                     else
                         throw new Exception("Access denied");
-                    return Evaluation.Restart;
                 }
                 //validate all of the values are currect or not
                 else
