@@ -39,6 +39,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Script\ShellScript.cs" />
+    <Compile Include="Strobarried\Evaluation.cs" />
     <Compile Include="Strobarried\Extension.cs" />
     <Compile Include="Strobarried\Strobarried.cs" />
     <Compile Include="WMI\WMIProvider.cs" />

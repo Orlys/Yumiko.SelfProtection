@@ -2,7 +2,7 @@
 #define Display_Error
 
 /// Generate Empty DLL
-//#define Create_New
+///#define Create_New
 
 #pragma warning disable 0168
 namespace Yumiko.SelfProtection.Core
@@ -24,7 +24,7 @@ namespace Yumiko.SelfProtection.Core
     /// <summary>
     /// 🍓🍓🍓 Strobarried (i.e.: Strawberry) 🍀 Powered by NoisserpXeger 🍓🍓🍓
     /// </summary>
-    public sealed class Strobarried
+    public sealed partial class Strobarried
     {
         #region Declaration
         internal readonly HashAlgorithm Hash;
@@ -65,9 +65,6 @@ namespace Yumiko.SelfProtection.Core
         #endregion
 
 #if Create_New
-        #region Non-Compiled
-
-
         public bool Compile()
         {
             this.Option.OutputAssembly = this.FullPath;
@@ -84,25 +81,13 @@ namespace Yumiko.SelfProtection.Core
             this.displayError(errors);
             return !errors.HasErrors;
         }
-        #endregion
 #else
-        #region Compiled
-
         public bool Compile()
         {
             this.Option.OutputAssembly = this.FullPath;
             var errors = this.compiler.CompileAssemblyFromSource(this.Option, Encoding.UTF8.GetString(this.x3(this.Identifications))).Errors;
             this.displayError(errors);
             return !errors.HasErrors;
-        }
-
-        [Flags]
-        public enum Evaluation
-        {
-            Error = 0,
-            False = 1,
-            True = 2,
-            Restart = False | True
         }
 
         public static Evaluation Validate(Strobarried raw)
@@ -162,7 +147,6 @@ namespace Yumiko.SelfProtection.Core
                 return Evaluation.Error;
             }
         }
-        #endregion
 #endif
 
         #region Obfuscation
