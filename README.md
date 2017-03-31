@@ -18,7 +18,8 @@
   strobarried.Compile();
   ```
   🍓Compile the project and now you can see the **Bind.dll** in directory after compiled
-  🍓You need copied **Bind.dll** to your output folder
+  
+  🍓You need copy **Bind.dll** to your output folder
 
 
 - ### Second (Append validation code into your code)
