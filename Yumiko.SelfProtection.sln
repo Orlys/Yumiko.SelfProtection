@@ -5,6 +5,11 @@ VisualStudioVersion = 15.0.26228.9
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yumiko.SelfProtection", "Yumiko.SelfProtection\Yumiko.SelfProtection.csproj", "{27585BB4-5A29-4154-B3E7-DF9E39BD9EE0}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test", "Test\Test.csproj", "{EA1D1BA1-1F74-494D-B59C-E25B906866F7}"
+	ProjectSection(ProjectDependencies) = postProject
+		{27585BB4-5A29-4154-B3E7-DF9E39BD9EE0} = {27585BB4-5A29-4154-B3E7-DF9E39BD9EE0}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +20,10 @@ Global
 		{27585BB4-5A29-4154-B3E7-DF9E39BD9EE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{27585BB4-5A29-4154-B3E7-DF9E39BD9EE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{27585BB4-5A29-4154-B3E7-DF9E39BD9EE0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EA1D1BA1-1F74-494D-B59C-E25B906866F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EA1D1BA1-1F74-494D-B59C-E25B906866F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EA1D1BA1-1F74-494D-B59C-E25B906866F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EA1D1BA1-1F74-494D-B59C-E25B906866F7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

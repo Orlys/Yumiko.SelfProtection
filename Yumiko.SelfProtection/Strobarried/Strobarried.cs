@@ -65,7 +65,7 @@ namespace Yumiko.SelfProtection.Core
         #endregion
 
 #if Create_New
-#line 2 
+#line 2
 #warning 🍓 You will generate new DLL from this method 🍓
         public bool Compile()
         {
@@ -83,6 +83,7 @@ namespace Yumiko.SelfProtection.Core
             this.displayError(errors);
             return !errors.HasErrors;
         }
+#line default
 #else
         public bool Compile()
         {
