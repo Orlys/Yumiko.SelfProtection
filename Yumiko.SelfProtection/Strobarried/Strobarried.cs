@@ -1,8 +1,8 @@
-﻿/// Display Error In Console 
-#define Display_Error
+﻿/// Generate Empty DLL
+//#define Create_New
 
-/// Generate Empty DLL
-///#define Create_New
+/// Display Error In Console 
+#define Display_Error
 
 #pragma warning disable 0168
 namespace Yumiko.SelfProtection.Core
@@ -65,6 +65,8 @@ namespace Yumiko.SelfProtection.Core
         #endregion
 
 #if Create_New
+#line 2 
+#warning 🍓 You will generate new DLL from this method 🍓
         public bool Compile()
         {
             this.Option.OutputAssembly = this.FullPath;
