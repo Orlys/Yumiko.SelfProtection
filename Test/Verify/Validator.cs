@@ -1,4 +1,5 @@
-﻿namespace Yumiko.SelfProtection.Verify
+﻿
+namespace Yumiko.SelfProtection.Verify
 {
     using System;
     using System.Collections;
@@ -17,11 +18,6 @@
                 .GetMembers((BindingFlags)17301375)
                 .Where(x => x.GetCustomAttribute<VerifyAttribute>() != null);
             this.attrs = mems.ToList();
-        }
-
-        internal void InjectInterceptor()
-        {
-
         }
 
         public void Debug(Action<string> output)
