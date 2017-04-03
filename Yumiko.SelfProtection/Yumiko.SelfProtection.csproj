@@ -42,7 +42,7 @@
     <Compile Include="Strobarried\Evaluation.cs" />
     <Compile Include="Strobarried\Extension.cs" />
     <Compile Include="Strobarried\Strobarried.cs" />
-    <Compile Include="Verify\ValidateExtension.cs" />
+    <Compile Include="Verify\Extension.cs" />
     <Compile Include="Verify\VerifyAttribute.cs" />
     <Compile Include="Verify\Validator.cs" />
     <Compile Include="WMI\WMIProvider.cs" />
