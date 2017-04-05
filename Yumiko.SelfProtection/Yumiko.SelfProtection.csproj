@@ -42,9 +42,9 @@
     <Compile Include="Strobarried\Evaluation.cs" />
     <Compile Include="Strobarried\Extension.cs" />
     <Compile Include="Strobarried\Strobarried.cs" />
-    <Compile Include="Verify\Extension.cs" />
-    <Compile Include="Verify\VerifyAttribute.cs" />
-    <Compile Include="Verify\Validator.cs" />
+    <Compile Include="Kryanbarried\Extension.cs" />
+    <Compile Include="Kryanbarried\KryanbarriedAttribute.cs" />
+    <Compile Include="Kryanbarried\Validator.cs" />
     <Compile Include="WMI\WMIProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="WMI\WMISubject.cs" />

@@ -1,5 +1,4 @@
-﻿
-namespace Yumiko.SelfProtection.Verify
+﻿namespace Yumiko.SelfProtection.Kryanbarried
 {
     using System;
     using System.Collections;
@@ -16,8 +15,13 @@ namespace Yumiko.SelfProtection.Verify
         {
             var mems = typeof(R)
                 .GetMembers((BindingFlags)17301375)
-                .Where(x => x.GetCustomAttribute<VerifyAttribute>() != null);
+                .Where(x => x.GetCustomAttribute<KryanbarriedAttribute>() != null);
             this.attrs = mems.ToList();
+        }
+
+        internal void InjectInterceptor()
+        {
+
         }
 
         public void Debug(Action<string> output)

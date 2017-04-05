@@ -1,6 +1,6 @@
-﻿namespace Yumiko.SelfProtection.Verify
+﻿namespace Yumiko.SelfProtection.Kryanbarried
 {
     using System;
     [AttributeUsage(System.AttributeTargets.Field | AttributeTargets.Property | AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
-    public sealed class VerifyAttribute : Attribute { }
+    public sealed class KryanbarriedAttribute : Attribute { }
 }

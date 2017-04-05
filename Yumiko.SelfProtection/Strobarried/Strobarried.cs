@@ -5,7 +5,7 @@
 #define Display_Error
 
 #pragma warning disable 0168
-namespace Yumiko.SelfProtection.Core
+namespace Yumiko.SelfProtection.Strobarrieds.Core
 {
     using System;
     using System.Collections.Generic;
@@ -29,8 +29,8 @@ namespace Yumiko.SelfProtection.Core
         #region Declaration
         internal readonly HashAlgorithm Hash;
         private CSharpCodeProvider compiler;
-        private CompilerParameters Option { get; set; }
-        private IReadOnlyDictionary<string, string> Identifications { get; set; }
+        private CompilerParameters option { get; set; }
+        private IReadOnlyDictionary<string, string> identifications { get; set; }
         public string FullPath { get; private set; }
 
         public Strobarried(IReadOnlyDictionary<string, string> identifications, HashAlgorithm hash = null)
@@ -40,14 +40,14 @@ namespace Yumiko.SelfProtection.Core
             this.compiler = new CSharpCodeProvider();
             this.compiler.Supports(GeneratorSupport.AssemblyAttributes);
             this.Hash = hash ?? new SHA512Cng();
-            this.Option = new CompilerParameters(new[] { "System.dll", "System.Core.dll" })
+            this.option = new CompilerParameters(new[] { "System.dll", "System.Core.dll" })
             {
                 GenerateExecutable = false,
                 GenerateInMemory = false,
                 IncludeDebugInformation = false,
             };
             this.FullPath = Path.GetFullPath("Bind.dll");
-            this.Identifications = identifications;
+            this.identifications = identifications;
         }
         private void displayError(CompilerErrorCollection errors)
         {
@@ -66,7 +66,7 @@ namespace Yumiko.SelfProtection.Core
 
 #if Create_New
 #line 2
-#warning 🍓 You will generate new DLL from this method 🍓
+#warning 🍓 You will generate new DLL from this method 🍓 
         public bool Compile()
         {
             this.Option.OutputAssembly = this.FullPath;
@@ -87,8 +87,8 @@ namespace Yumiko.SelfProtection.Core
 #else
         public bool Compile()
         {
-            this.Option.OutputAssembly = this.FullPath;
-            var errors = this.compiler.CompileAssemblyFromSource(this.Option, Encoding.UTF8.GetString(this.x3(this.Identifications))).Errors;
+            this.option.OutputAssembly = this.FullPath;
+            var errors = this.compiler.CompileAssemblyFromSource(this.option, Encoding.UTF8.GetString(this.x3(this.identifications))).Errors;
             this.displayError(errors);
             return !errors.HasErrors;
         }
@@ -132,7 +132,7 @@ namespace Yumiko.SelfProtection.Core
                 }
 
                 var value = string.Empty;
-                foreach (var item in raw.Identifications)
+                foreach (var item in raw.identifications)
                     if (fromDll.TryGetValue(raw.x0(item.Key), out value))
                         if (value == raw.x1(item.Value)) continue;
                         else return  Evaluation.False;
@@ -184,7 +184,7 @@ namespace Yumiko.SelfProtection.Core
             }).ToArray();
 
         private int x6()
-            => new Random(Guid.NewGuid().GetHashCode()).Next(Math.Abs(this.Identifications.Count + 10), Math.Abs(this.Identifications.Count + 40));
+            => new Random(Guid.NewGuid().GetHashCode()).Next(Math.Abs(this.identifications.Count + 10), Math.Abs(this.identifications.Count + 40));
 
         private IEnumerable<byte> x5()
         {

@@ -5,7 +5,7 @@
 //#define Create_New
 
 #pragma warning disable 0168
-namespace Yumiko.SelfProtection.Core
+namespace Yumiko.SelfProtection.Strobarrieds.Core
 {
 #if !Create_New
     using System;

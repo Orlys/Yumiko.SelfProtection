@@ -1,5 +1,5 @@
 ﻿#pragma warning disable IDE0022
-namespace Yumiko.SelfProtection.Verify
+namespace Yumiko.SelfProtection.Kryanbarried
 {
     public static class Extension
     {

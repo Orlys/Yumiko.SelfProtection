@@ -1,5 +1,5 @@
 ﻿
-namespace Yumiko.SelfProtection.Core
+namespace Yumiko.SelfProtection.Strobarrieds.Core
 {
     using System.Collections.Generic;
     using System;
