@@ -4,14 +4,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using Yumiko.SelfProtection.Kryanbarried;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
-using Yumiko.SelfProtection.Strobarrieds.Core;
-using Yumiko.SelfProtection.WMI;
+
 
 namespace Test
 {
+    using Yumiko.SelfProtection.Kryanbarried;
+    using Mono.Cecil;
+    using Mono.Cecil.Cil;
+    using Yumiko.SelfProtection.Strobarrieds.Core;
+    using Yumiko.SelfProtection.WMI;
+    using System.Reflection;
+
     class Program
     {
         static void E()
@@ -55,97 +58,20 @@ namespace Test
 
 
         }
-        static void VA()
+        static void VA(WMISubject sub)
         {
-            Strobarried s = new Strobarried(new WMIProvider(WMISubject.Win32_BIOS));
+            Strobarried s = new Strobarried(new WMIProvider(sub));
             var v = Strobarried.Validate(s);
             if (v != Strobarried.Evaluation.True)
                 Environment.Exit(-1);
         }
 
-        static string MSIL_To_CSharpCode(string path , string methodName)
-        {
-            var builder = new StringBuilder();
-            var asm = AssemblyDefinition.ReadAssembly(path);
-            var typs = asm.Modules.SelectMany(m => m.Types);
-            var mets = typs.SelectMany(t => t.Methods).Where(t => t.FullName.Contains(methodName));
-            foreach (var method in mets)
-            {
-                var fullname = $"<Method '{method.FullName}'>";
-                builder.AppendLine(fullname);
-                var methodDefinition = $"<MethodDefinition '{nameof(mets)}'>";
-                builder.AppendLine(methodDefinition);
-                var ilpcsr = $"<ILProcessor '{"ilpcsr"}'>";
-                builder.AppendLine(ilpcsr);
-                foreach (var instruction in method.Body.Instructions)
-                {
-                    if (instruction.Operand == null)
-                    {
-
-                    }
-                    else if (instruction.Operand is byte |
-                            instruction.Operand is char |
-                            instruction.Operand is short |
-                            instruction.Operand is ushort |
-                            instruction.Operand is int |
-                            instruction.Operand is uint |
-                            instruction.Operand is long |
-                            instruction.Operand is ulong |
-                            instruction.Operand is float |
-                            instruction.Operand is double |
-                            instruction.Operand is string)
-                    {
-
-                    }
-                    else if (instruction.Operand is MethodReference)
-                    {
-
-                    }
-                    else if (instruction.Operand is FieldReference)
-                    {
-
-                    }
-                    else if (instruction.Operand is PropertyReference)
-                    {
-
-                    }
-                    else if (instruction.Operand is Instruction)
-                    {
-                        //  method.Body.GetILProcessor().Create()
-                    }
-                    else
-                    {
-                        throw new Exception($"Unhandled type : {instruction.GetType()}");
-                    }
-                    
-                    var opcode = $"Instruction.Create(OpCodes.{instruction.OpCode.Name.Replace(".", "_")})";
-                 
-                }
-            }
-
-            return builder.ToString();
-        }
 
         static void E2()
         {
             var asm = AssemblyDefinition.ReadAssembly(AppDomain.CurrentDomain.FriendlyName);
             var typs = asm.Modules.SelectMany(m => m.Types);
             var mets = typs.SelectMany(t => t.Methods).First(x => x.FullName.Contains("VA"));
-            
-
-            /*
-            var ldstr = Instruction.Create(OpCodes.Ldstr, "Hello");
-            var ilpcsr = mets.Body.GetILProcessor();
-            ilpcsr.InsertAfter(mets.Body.Instructions[0], ldstr);
-            var writeline = asm.MainModule.Import(typeof(Console).GetMethod(nameof(Console.WriteLine), new Type[] { typeof(string) }));
-            ilpcsr.InsertAfter(ldstr, Instruction.Create(OpCodes.Call, writeline));
-            var p = AppDomain.CurrentDomain.FriendlyName.Replace(".exe", "Patch.exe");
-            asm.Write(p);
-
-            var asm2 = AssemblyDefinition.ReadAssembly(p);
-            var typs2 = asm2.Modules.SelectMany(m => m.Types);
-             mets = typs2.SelectMany(t => t.Methods).First(x => x.FullName.Contains("VA"));
-            */
             foreach (var item in mets.Body.Instructions)
             {
 
@@ -165,19 +91,16 @@ namespace Test
         }
         static void Main(string[] args)
         {
-
             E2();
-            Console.ReadKey();
-            VA();
-            Console.ReadKey();
+            Console.WriteLine(  "================================");
+            new H().TestInject();
+
+            Console.ReadKey();  
             return;
-            E();
-
-            Console.ReadKey();
-            return;
+            
 
 
-            var p = new x.H();
+            var p = new H();
             var verify = p.Bind();
             verify.Debug(Console.WriteLine);
             Console.ReadKey();
@@ -185,8 +108,16 @@ namespace Test
     }
 }
 
-namespace x
+namespace Test
 {
+    using System.Reflection;
+    using System.Collections;
+    using System.Reflection.Emit;
+    using Yumiko.SelfProtection.Kryanbarried;
+    using Yumiko.SelfProtection.WMI;
+    using Yumiko.SelfProtection.Strobarrieds.Core;
+    using System.Security.Cryptography;
+
     public class H
     {
         [Kryanbarried]
@@ -200,5 +131,56 @@ namespace x
 
         [Kryanbarried]
         long Test4() => 4000;
+
+        delegate void Remote(WMISubject sub);
+        public void TestInject()
+        {
+            var va = new DynamicMethod("va", typeof(void), new Type[1] { typeof(WMISubject) });
+            var body = va.GetILGenerator();
+
+            body.Emit(OpCodes.Nop);
+            //new WMIProvider([WMISubject]arg0);
+            body.Emit(OpCodes.Ldarg_0); 
+            body.Emit(OpCodes.Newobj, typeof(WMIProvider).GetConstructor(new Type[1] { typeof(WMISubject) }));
+
+            body.Emit(OpCodes.Ldnull);
+            body.Emit(OpCodes.Newobj, typeof(Strobarried).GetConstructor(new Type[2] { typeof(IReadOnlyDictionary<string, string>), typeof(HashAlgorithm) }));
+            body.Emit(OpCodes.Stloc_0);
+
+            body.Emit(OpCodes.Ldloc_0);
+            body.Emit(OpCodes.Call, typeof(Strobarried).GetMethods()
+                .Where(m => m.Attributes == (
+                        System.Reflection.MethodAttributes.HideBySig |
+                        System.Reflection.MethodAttributes.PrivateScope |
+                        System.Reflection.MethodAttributes.Static |
+                        System.Reflection.MethodAttributes.Public)
+                        & m.GetParameters().Count() == 1)
+                .FirstOrDefault());
+            body.Emit(OpCodes.Stloc_1);
+
+            body.Emit(OpCodes.Ldloc_1);
+            body.Emit(OpCodes.Ldc_I4_2);
+            body.Emit(OpCodes.Ceq);
+
+            body.Emit(OpCodes.Ldc_I4_0);
+            body.Emit(OpCodes.Ceq);
+            body.Emit(OpCodes.Stloc_2);
+
+            var label = body.DefineLabel();
+            body.Emit(OpCodes.Ldloc_2);
+            body.Emit(OpCodes.Brfalse_S,label);
+            body.Emit(OpCodes.Ldc_I4_0);
+            body.Emit(OpCodes.Call, typeof(Environment).GetMethod(nameof(Environment.Exit)));
+
+            body.MarkLabel(label);
+            body.Emit(OpCodes.Nop);
+            body.Emit(OpCodes.Ret);
+
+
+            var o = (Remote)va.CreateDelegate(typeof(Remote));
+            o(WMISubject.Win32_BIOS);
+
+            
+        }
     }
 }
