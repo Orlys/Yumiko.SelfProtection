@@ -14,6 +14,7 @@ namespace Test
     using Yumiko.SelfProtection.Strobarrieds.Core;
     using Yumiko.SelfProtection.WMI;
     using System.Reflection;
+    using System.Reflection.Emit;
 
     class Program
     {
@@ -58,6 +59,28 @@ namespace Test
 
 
         }
+        static void Stub()
+        {
+
+            Console.WriteLine((long)125556);
+            Console.WriteLine("Hello world");
+        }
+        static void Stub2()
+        {
+            var s = "Hello world";
+            Console.WriteLine(s);
+            Console.WriteLine(s);
+        }
+        static void Stub3()
+        {
+            var s = "Hello";
+            Console.WriteLine(s);
+            Console.WriteLine(s + "world");
+        }
+
+
+
+
         static void VA(WMISubject sub)
         {
             Strobarried s = new Strobarried(new WMIProvider(sub));
@@ -67,11 +90,11 @@ namespace Test
         }
 
 
-        static void E2()
+        static void E2(string nameof)
         {
             var asm = AssemblyDefinition.ReadAssembly(AppDomain.CurrentDomain.FriendlyName);
             var typs = asm.Modules.SelectMany(m => m.Types);
-            var mets = typs.SelectMany(t => t.Methods).First(x => x.FullName.Contains("VA"));
+            var mets = typs.SelectMany(t => t.Methods).First(x => x.FullName.Contains(nameof));
             foreach (var item in mets.Body.Instructions)
             {
 
@@ -89,11 +112,31 @@ namespace Test
                     Console.WriteLine(item.Operand ?? " // " + item.Operand);
             }
         }
+
+
         static void Main(string[] args)
         {
-            E2();
-            Console.WriteLine(  "================================");
+            /*
+            DynamicMethod dm = new DynamicMethod("foo", typeof(void), Type.EmptyTypes);
+            ILGenerator gen = dm.GetILGenerator();
+
+            var b = dm.CreateDelegate(typeof(Action)) as Action;
+            try
+            {
+                b();
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+
+            Console.WriteLine();
+            
+    */
+
             new H().TestInject();
+            Console.ReadKey();
+            return;
 
             Console.ReadKey();  
             return;
@@ -118,6 +161,8 @@ namespace Test
     using Yumiko.SelfProtection.Strobarrieds.Core;
     using System.Security.Cryptography;
 
+
+
     public class H
     {
         [Kryanbarried]
@@ -132,21 +177,28 @@ namespace Test
         [Kryanbarried]
         long Test4() => 4000;
 
-        delegate void Remote(WMISubject sub);
+
+        delegate void Validate(WMISubject subject);
         public void TestInject()
         {
             var va = new DynamicMethod("va", typeof(void), new Type[1] { typeof(WMISubject) });
             var body = va.GetILGenerator();
-
+            
+            body.DeclareLocal(typeof(Strobarried));
+            body.DeclareLocal(typeof(Strobarried.Evaluation));
+            body.DeclareLocal(typeof(bool));
+            
             body.Emit(OpCodes.Nop);
-            //new WMIProvider([WMISubject]arg0);
             body.Emit(OpCodes.Ldarg_0); 
             body.Emit(OpCodes.Newobj, typeof(WMIProvider).GetConstructor(new Type[1] { typeof(WMISubject) }));
 
+            body.Emit(OpCodes.Nop);
             body.Emit(OpCodes.Ldnull);
             body.Emit(OpCodes.Newobj, typeof(Strobarried).GetConstructor(new Type[2] { typeof(IReadOnlyDictionary<string, string>), typeof(HashAlgorithm) }));
             body.Emit(OpCodes.Stloc_0);
 
+
+            body.Emit(OpCodes.Nop);
             body.Emit(OpCodes.Ldloc_0);
             body.Emit(OpCodes.Call, typeof(Strobarried).GetMethods()
                 .Where(m => m.Attributes == (
@@ -158,29 +210,35 @@ namespace Test
                 .FirstOrDefault());
             body.Emit(OpCodes.Stloc_1);
 
+            body.Emit(OpCodes.Nop);
             body.Emit(OpCodes.Ldloc_1);
             body.Emit(OpCodes.Ldc_I4_2);
             body.Emit(OpCodes.Ceq);
-
             body.Emit(OpCodes.Ldc_I4_0);
             body.Emit(OpCodes.Ceq);
             body.Emit(OpCodes.Stloc_2);
-
-            var label = body.DefineLabel();
             body.Emit(OpCodes.Ldloc_2);
+            var label = body.DefineLabel();
             body.Emit(OpCodes.Brfalse_S,label);
-            body.Emit(OpCodes.Ldc_I4_0);
+
+            body.Emit(OpCodes.Ldc_I4_M1);
             body.Emit(OpCodes.Call, typeof(Environment).GetMethod(nameof(Environment.Exit)));
+            body.Emit(OpCodes.Nop);
 
             body.MarkLabel(label);
-            body.Emit(OpCodes.Nop);
             body.Emit(OpCodes.Ret);
 
+            (va.CreateDelegate(typeof(Validate)) as Validate)(WMISubject.Win32_BIOS);
+        }
+    }
 
-            var o = (Remote)va.CreateDelegate(typeof(Remote));
-            o(WMISubject.Win32_BIOS);
-
-            
+    public class OFactory 
+    {
+        
+        public OFactory()
+        {
+            var ab = AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName("Dynamically-Assembly"), AssemblyBuilderAccess.Run);
+            var mb = ab.DefineDynamicModule("Dynamically-Module");
         }
     }
 }
