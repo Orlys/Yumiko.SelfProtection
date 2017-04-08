@@ -138,11 +138,6 @@ namespace Test
             Console.ReadKey();
             return;
 
-            Console.ReadKey();  
-            return;
-            
-
-
             var p = new H();
             var verify = p.Bind();
             verify.Debug(Console.WriteLine);
@@ -178,35 +173,32 @@ namespace Test
         long Test4() => 4000;
 
 
-        delegate void Validate(WMISubject subject);
-        public void TestInject()
+        public void VA()
         {
-            var va = new DynamicMethod("va", typeof(void), new Type[1] { typeof(WMISubject) });
+            var va = new DynamicMethod("#" + Guid.NewGuid(), typeof(void), new Type[1] { typeof(WMISubject) });
             var body = va.GetILGenerator();
-            
+
             body.DeclareLocal(typeof(Strobarried));
             body.DeclareLocal(typeof(Strobarried.Evaluation));
             body.DeclareLocal(typeof(bool));
-            
+
             body.Emit(OpCodes.Nop);
-            body.Emit(OpCodes.Ldarg_0); 
+            body.Emit(OpCodes.Ldarg_0);
             body.Emit(OpCodes.Newobj, typeof(WMIProvider).GetConstructor(new Type[1] { typeof(WMISubject) }));
 
             body.Emit(OpCodes.Nop);
             body.Emit(OpCodes.Ldnull);
             body.Emit(OpCodes.Newobj, typeof(Strobarried).GetConstructor(new Type[2] { typeof(IReadOnlyDictionary<string, string>), typeof(HashAlgorithm) }));
             body.Emit(OpCodes.Stloc_0);
-
-
             body.Emit(OpCodes.Nop);
             body.Emit(OpCodes.Ldloc_0);
             body.Emit(OpCodes.Call, typeof(Strobarried).GetMethods()
-                .Where(m => m.Attributes == (
-                        System.Reflection.MethodAttributes.HideBySig |
-                        System.Reflection.MethodAttributes.PrivateScope |
-                        System.Reflection.MethodAttributes.Static |
-                        System.Reflection.MethodAttributes.Public)
-                        & m.GetParameters().Count() == 1)
+                .Where(m => m.Attributes == (System.Reflection.MethodAttributes.HideBySig |
+                                    System.Reflection.MethodAttributes.PrivateScope |
+                                    System.Reflection.MethodAttributes.Static |
+                                    System.Reflection.MethodAttributes.Public)
+                        & m.GetParameters().Count() == 1
+                        & m.Name == nameof(Strobarried.Validate))
                 .FirstOrDefault());
             body.Emit(OpCodes.Stloc_1);
 
@@ -217,28 +209,19 @@ namespace Test
             body.Emit(OpCodes.Ldc_I4_0);
             body.Emit(OpCodes.Ceq);
             body.Emit(OpCodes.Stloc_2);
+
             body.Emit(OpCodes.Ldloc_2);
             var label = body.DefineLabel();
-            body.Emit(OpCodes.Brfalse_S,label);
+            body.Emit(OpCodes.Brfalse_S, label);
 
             body.Emit(OpCodes.Ldc_I4_M1);
             body.Emit(OpCodes.Call, typeof(Environment).GetMethod(nameof(Environment.Exit)));
             body.Emit(OpCodes.Nop);
-
             body.MarkLabel(label);
             body.Emit(OpCodes.Ret);
 
-            (va.CreateDelegate(typeof(Validate)) as Validate)(WMISubject.Win32_BIOS);
+            (va.CreateDelegate(typeof(Action<WMISubject>)) as Action<WMISubject>)(WMISubject.Win32_BIOS);
         }
     }
-
-    public class OFactory 
-    {
-        
-        public OFactory()
-        {
-            var ab = AppDomain.CurrentDomain.DefineDynamicAssembly(new AssemblyName("Dynamically-Assembly"), AssemblyBuilderAccess.Run);
-            var mb = ab.DefineDynamicModule("Dynamically-Module");
-        }
-    }
+    
 }
