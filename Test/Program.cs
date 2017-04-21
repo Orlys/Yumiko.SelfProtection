@@ -13,8 +13,11 @@ namespace Test
     using Mono.Cecil.Cil;
     using Yumiko.SelfProtection.Strobarrieds.Core;
     using Yumiko.SelfProtection.WMI;
+    using System.Security.Cryptography;
+  //  using System.Reflection;
+//    using System.Reflection.Emit;
+    using System.IO;
     using System.Reflection;
-    using System.Reflection.Emit;
 
     class Program
     {
@@ -36,9 +39,7 @@ namespace Test
                                 .Where(f => f
                                     .CustomAttributes
                                     .Any(a => a.AttributeType.FullName == typeof(KryanbarriedAttribute).FullName));
-
             
-
             mets.ToList().ForEach(m =>
             {
                 Console.WriteLine(m.FullName);
@@ -89,15 +90,196 @@ namespace Test
                 Environment.Exit(-1);
         }
 
+        static string enc (string ence)
+        {
+            var aes = Aes.Create();
+            var s = new Strobarried(new WMIProvider(WMISubject.Win32_LogicalDisk));
+            aes.Key = null;
+            return null;
+        }
 
-        static void E2(string nameof)
+
+        class Obfuscator
+        {
+            private static string encryptString(string raw)
+            {
+                using (var m = new MemoryStream())
+                using (var c = new CryptoStream(m,
+                    new AesCryptoServiceProvider
+                    {
+                        KeySize = 256,
+                        Key = Encoding.ASCII.GetBytes(new WMIProvider(WMISubject.Win32_BIOS)["BiosCharacteristics"].Replace(", ", null).Substring(0, 32)),
+                        IV = Encoding.ASCII.GetBytes(new WMIProvider(WMISubject.Win32_ComputerSystemProduct)["UUID"].Replace("-", null).Substring(16))
+                    }
+                    .CreateEncryptor(), CryptoStreamMode.Write))
+                {
+                    var bytes = Encoding.UTF8.GetBytes(raw);
+                    c.Write(bytes, 0, bytes.Length);
+                    c.FlushFinalBlock();
+                    return Convert.ToBase64String(m.ToArray());
+                }
+            }
+            public static void PreEncryptString()
+            {
+                var asm = AssemblyDefinition.ReadAssembly(AppDomain.CurrentDomain.FriendlyName);
+                var m = asm.MainModule;
+                var typs = asm.Modules.SelectMany(mod => mod.Types);
+                foreach (var method in typs.SelectMany(t => t.Methods))
+                {
+                    foreach (var target in method.Body.Instructions.Where(x => x.OpCode.Equals(Mono.Cecil.Cil.OpCodes.Ldstr)))
+                    {
+                        //inject here
+                        var b = method.Body;
+                        var il = b.GetILProcessor();
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Nop));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Ldstr, encryptString(target.Operand as string)));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Stloc_0));
+
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Nop));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Newobj, m.Import(typeof(MemoryStream).GetConstructor(Type.EmptyTypes))));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Stloc_1));
+
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Ldloc_1));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Newobj, m.Import(typeof(AesCryptoServiceProvider).GetConstructor(Type.EmptyTypes))));
+
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Dup));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Ldc_I4, 256));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Callvirt, m.Import(typeof(SymmetricAlgorithm)).Resolve().Methods.First(x => x.Name == "set_KeySize")));
+
+                        //offset:
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Nop));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Dup));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Call, m.Import(typeof(Encoding)).Resolve().Methods.First(x => x.Name == "get_ASCII")));
+
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Ldc_I4_S, 15));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Newobj, m.Import(typeof(WMIProvider).GetConstructor(new Type[1] { typeof(WMISubject) }))));
+
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Ldstr, "BiosCharacteristics"));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Call, m.Import(typeof(WMIProvider)).Resolve().Methods.First(x => x.Name == "get_Item")));
+
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Ldstr, ", "));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Ldnull));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Callvirt, m.Import(typeof(string)).Resolve().Methods.First(x => x.Name == nameof(string.Replace) & x.Parameters.All(a => a.ParameterType.Equals(m.Import(typeof(string)))))));
+
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Ldc_I4_0));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Ldc_I4_S, 32));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Callvirt, m.Import(typeof(string)).Resolve().Methods.First(x => x.Name == nameof(string.Substring) & x.Parameters.Count == 2)));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Callvirt, m.Import(typeof(Encoding)).Resolve().Methods.First(x => x.Name == nameof(Encoding.GetBytes) & x.Parameters[0].ParameterType == m.Import(typeof(string)))));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Callvirt, m.Import(typeof(SymmetricAlgorithm)).Resolve().Methods.First(x => x.Name == "set_Key")));
+
+                        //offset:
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Nop));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Dup));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Call, m.Import(typeof(Encoding)).Resolve().Methods.First(x => x.Name == "get_ASCII")));
+
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Ldc_I4_S, 36));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Newobj, m.Import(typeof(WMIProvider).GetConstructor(new Type[1] { typeof(WMISubject) }))));
+
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Ldstr, "UUID"));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Call, m.Import(typeof(WMIProvider)).Resolve().Methods.First(x => x.Name == "get_Item")));
+
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Ldstr, "-"));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Ldnull));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Callvirt, m.Import(typeof(string)).Resolve().Methods.First(x => x.Name == nameof(string.Replace) & x.Parameters.All(a => a.ParameterType.Equals(m.Import(typeof(string)))))));
+
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Ldc_I4_S, 16));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Callvirt, m.Import(typeof(string)).Resolve().Methods.First(x => x.Name == nameof(string.Substring) & x.Parameters.Count == 1)));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Callvirt, m.Import(typeof(Encoding)).Resolve().Methods.First(x => x.Name == nameof(Encoding.GetBytes) & x.Parameters[0].ParameterType == m.Import(typeof(string)))));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Callvirt, m.Import(typeof(SymmetricAlgorithm)).Resolve().Methods.First(x => x.Name == "set_IV")));
+
+                        //offset:136
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Nop));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Callvirt, m.Import(typeof(SymmetricAlgorithm).GetMethod(nameof(SymmetricAlgorithm.CreateDecryptor)))));
+
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Ldc_I4_1));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Newobj, m.Import(typeof(CryptoStream).GetConstructor(new[] { typeof(Stream), typeof(ICryptoTransform), typeof(CryptoStreamMode) }))));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Stloc_2));
+
+                        //offset:149
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Nop));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Ldloc_0));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Call, m.Import(typeof(Convert).GetMethod(nameof(Convert.FromBase64String)))));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Stloc_3));
+
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Ldloc_2));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Ldloc_3));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Ldc_I4_0));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Ldloc_3));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Ldlen));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Conv_I4));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Callvirt, m.Import(typeof(Stream).GetMethod(nameof(Stream.Write)))));
+
+                        //offset:168
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Nop));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Ldloc_2));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Callvirt, m.Import(typeof(CryptoStream).GetMethod(nameof(CryptoStream.FlushFinalBlock)))));
+
+                        //offset:175
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Nop));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Call, m.Import(typeof(Encoding)).Resolve().Methods.First(x => x.Name == "get_UTF8")));
+
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Ldloc_1));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Callvirt, m.Import(typeof(MemoryStream).GetMethod(nameof(MemoryStream.ToArray)))));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Callvirt, m.Import(typeof(Encoding)).Resolve().Methods.First(x => x.Name == nameof(Encoding.GetString) & x.Parameters[0].ParameterType.Equals(m.Import(typeof(string))))));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Stloc_0));
+
+                        //offset:193
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Nop));
+                        var offset_220 = Instruction.Create(OpCodes.Nop);
+                        var offset_207 = Instruction.Create(OpCodes.Leave_S, offset_220);
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Leave_S, offset_207));
+
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Ldloc_2));
+                        var offset_206 = Instruction.Create(OpCodes.Endfinally);
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Brfalse_S, offset_206));
+
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Ldloc_2));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Callvirt, m.Import(typeof(IDisposable).GetMethod(nameof(IDisposable.Dispose)))));
+
+                        //offset:205
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Nop));
+                        il.InsertBefore(target, offset_206);
+                        il.InsertBefore(target, offset_207);
+
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Ldloc_1));
+                        var offset_219 = Instruction.Create(OpCodes.Endfinally);
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Brfalse_S, offset_219));
+
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Ldloc_1));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Callvirt, m.Import(typeof(IDisposable).GetMethod(nameof(IDisposable.Dispose)))));
+
+                        //offset:218
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Nop));
+                        il.InsertBefore(target, offset_219);
+
+                        //offset:220
+                        il.InsertBefore(target, offset_220);
+                        var offset_228 = Instruction.Create(OpCodes.Ldloc_0);
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Leave_S, offset_228));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Pop));
+
+                        //offset:224
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Nop));
+
+                        //offset:225
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Nop));
+                        il.InsertBefore(target, Instruction.Create(OpCodes.Leave_S, offset_228));
+                        il.InsertBefore(target, offset_228);
+
+                        il.Remove(target);
+                    }
+                }
+            }
+        }
+        
+        static void ResolveMSIL(string nameof_method_name)
         {
             var asm = AssemblyDefinition.ReadAssembly(AppDomain.CurrentDomain.FriendlyName);
             var typs = asm.Modules.SelectMany(m => m.Types);
-            var mets = typs.SelectMany(t => t.Methods).First(x => x.FullName.Contains(nameof));
+            var mets = typs.SelectMany(t => t.Methods).First(x => x.FullName.Contains(nameof_method_name));
             foreach (var item in mets.Body.Instructions)
             {
-
+              
                 Console.Write(item.Offset.ToString().PadLeft(3) +" | "+ item.OpCode.ToString().PadRight(12) );
                 Console.Write("     " + item.Operand?.GetType() + "   ");
                 if (item.Operand is Instruction)
@@ -113,28 +295,78 @@ namespace Test
             }
         }
 
+        static string EncryptString(string raw)
+        {
+            using (var m = new MemoryStream())
+            using (var c = new CryptoStream(m,
+                new AesCryptoServiceProvider
+                {
+                    KeySize = 256,
+                    Key = new WMIProvider(WMISubject.Win32_BIOS)["BiosCharacteristics"].Replace(", ", null).Take(32).Select(x => (byte)x).ToArray(),
+                    IV = new WMIProvider(WMISubject.Win32_ComputerSystemProduct)["UUID"].Replace("-", null).Skip(16).Select(x => (byte)x).ToArray()
+                }
+                .CreateEncryptor(), CryptoStreamMode.Write))
+            {
+                var bytes = Encoding.UTF8.GetBytes(raw);
+                c.Write(bytes, 0, bytes.Length);
+                c.FlushFinalBlock();
+                return Convert.ToBase64String(m.ToArray());
+            }
+        }
+
+
+        static void DecryptString()
+        {
+            string encryptedRaw = "hhhhh";
+            try
+            {
+                using (var m = new MemoryStream())
+                using (var c = new CryptoStream(m,
+                    new AesCryptoServiceProvider
+                    {
+                        KeySize = 256,
+                        Key = Encoding.ASCII.GetBytes(new WMIProvider(WMISubject.Win32_BIOS)["BiosCharacteristics"].Replace(", ", null).Substring(0, 32)),
+                        IV = Encoding.ASCII.GetBytes(new WMIProvider(WMISubject.Win32_ComputerSystemProduct)["UUID"].Replace("-", null).Substring(16))
+                    }
+                    .CreateDecryptor(), CryptoStreamMode.Write))
+                {
+                    var bytes = Convert.FromBase64String(encryptedRaw);
+                    c.Write(bytes, 0, bytes.Length);
+                    c.FlushFinalBlock();
+                    encryptedRaw = Encoding.UTF8.GetString(m.ToArray());
+                }
+            }
+            catch
+            {
+
+            }
+            var result  = encryptedRaw;
+        }
 
         static void Main(string[] args)
         {
-            /*
-            DynamicMethod dm = new DynamicMethod("foo", typeof(void), Type.EmptyTypes);
-            ILGenerator gen = dm.GetILGenerator();
+            ResolveMSIL(nameof(DecryptString));
+            Console.ReadKey();
+            return;
 
-            var b = dm.CreateDelegate(typeof(Action)) as Action;
-            try
-            {
-                b();
-            }
-            catch(Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
+            var asm = AssemblyDefinition.ReadAssembly(AppDomain.CurrentDomain.FriendlyName);
+            var g = new GenericInstanceMethod(asm.MainModule.Import(typeof(Enumerable).GetMethod("Take")));
+            g.GenericArguments.Add(asm.MainModule.Import(typeof(char)));
 
-            Console.WriteLine();
+            var ins = Instruction.Create(OpCodes.Callvirt,g );
             
-    */
+            Console.WriteLine(ins.Operand);
+            Console.ReadKey();
+            return;
 
-            new H().TestInject();
+
+
+            ResolveMSIL(nameof(DecryptString));
+            Console.ReadKey();
+            return;
+
+
+            new H().VA();
             Console.ReadKey();
             return;
 
