@@ -8,7 +8,47 @@ namespace Yumiko.SelfProtection.Infrastructure
     using System.Diagnostics;
     using System.Globalization;
     using System.Management;
+    using System.Text;
     using Yumiko.SelfProtection.Infrastructure.Contract;
+
+    internal static class WmiHelper
+    {
+
+
+        public static string DebugString(object value)
+        {
+            if(value is IList list)
+            {
+                const string COMMA = ",";
+                switch (list.Count)
+                {
+                    case 0: return string.Empty;
+                    case 1: return list[0]?.ToString();
+                    case 2: return list[0]?.ToString() + COMMA + list[1]?.ToString();
+                    case 3: return list[0]?.ToString() + COMMA + list[1]?.ToString() + COMMA + list[2]?.ToString();
+                    default:
+                        {
+                            var sb = new StringBuilder(list[0]?.ToString());
+                            for (int i = 1; i < list.Count; i++)
+                            {
+                                sb.Append(COMMA).Append(list[i]?.ToString());
+
+                            }
+                            return sb.ToString();
+                        }
+
+                }
+
+            }
+            else
+            {
+                return value?.ToString() ?? string.Empty;
+            }
+
+        }
+
+    }
+
 
     /// <summary>
     /// Gets the system info, see https://docs.microsoft.com/en-us/windows/desktop/cimwin32prov/computer-system-hardware-classes
@@ -80,7 +120,9 @@ namespace Yumiko.SelfProtection.Infrastructure
         
         public static IEnumerable<T> Get<T>(WmiSubject subject, ITranspiler<T> transpiler, bool localOnly = true)
         {
-            var seacher = new ManagementObjectSearcher($"select * from Win32_{subject.ToString().TrimStart('_')}");
+            var subj = subject.ToString().TrimStart('_');
+            Debug.WriteLine("Query: "+ subj);
+            var seacher = new ManagementObjectSearcher($"select * from Win32_{subj}");
 
             foreach (ManagementObject mo in seacher.Get())
             {
@@ -93,6 +135,7 @@ namespace Yumiko.SelfProtection.Infrastructure
                         {
                             var name = pd.Name;
                             var value = Convert(pd.Type, pd.Value, pd.IsArray);
+                            Debug.WriteLine($"[{name}]: { WmiHelper.DebugString(value)  }");
                             dict.Add(name, value);
                         }
                         

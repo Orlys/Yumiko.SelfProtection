@@ -21,228 +21,99 @@ namespace Test
     using System.Collections;
     using Yumiko.SelfProtection.Infrastructure;
     using System.Diagnostics;
+    using System.Runtime.Serialization;
+    using System.Runtime.Serialization.Formatters.Binary;
+    using Yumiko.SelfProtection.Hydra;
 
-    class Program
+    partial class Program
+    {
+        static partial void Run(string[] args)
+        {
+            var uuid = Wmi.Get(WmiSubject.ComputerSystemProduct, Transpiler.Dynamic).First();
+            Console.WriteLine(uuid.UUID);
+            var bc = Wmi.Get(WmiSubject.BIOS, Transpiler.Dynamic).First();
+            Console.WriteLine(bc.BiosCharacteristics as byte[]);
+
+            /*
+            using (var m = new MemoryStream())
+            using (var c = new CryptoStream(m,
+                new AesCryptoServiceProvider
+                {
+                    KeySize = 256,
+                    Key = Encoding.ASCII.GetBytes(new WMIProvider(WMISubject.Win32_BIOS)["BiosCharacteristics"].Replace(", ", null).Substring(0, 32)),
+                    IV = Encoding.ASCII.GetBytes(new WMIProvider(WMISubject.Win32_ComputerSystemProduct)["UUID"].Replace("-", null).Substring(16))
+                }
+                .CreateEncryptor(), CryptoStreamMode.Write))
+            {
+                var bytes = Encoding.UTF8.GetBytes(raw);
+                c.Write(bytes, 0, bytes.Length);
+                c.FlushFinalBlock();
+                return Convert.ToBase64String(m.ToArray());
+            }
+            */
+        }
+    }
+
+
+    public class PatchString : HydraScript
     {
 
-        static Program()
+        public PatchString() : base("Patch string")
         {
-            Console.BufferHeight = short.MaxValue - 1;
-        }
-
-        static void Main(string[] args)
-        {
-            main(args);
-            Console.ReadKey();
-        }
-
-        private static void main(string[] args)
-        {
-            var bios = Wmi.Get(WmiSubject.PhysicalMedia, Transpiler.Dynamic);
-            foreach (var b in bios)
-            {
-                Console.WriteLine(b.SerialNumber);
-                Console.WriteLine(b.Tag);
-            }
-
-            return;
-            var core = new HydraCore(args[0], new PatchString());
-            core.Run();
-        }
-
-
-
-        public class HydraCore : IDisposable
-        {
-            private readonly string _file;
-            private readonly HydraScript[] _scripts;
-            private readonly AssemblyDefinition _assembly;
-            public HydraCore(string file, params HydraScript[] scripts)
-            {
-                this._file = file;
-                this._scripts = scripts;
-                this._assembly = AssemblyDefinition.ReadAssembly(file);
-            }
-
-            public void Run()
-            {
-                foreach (var script in this._scripts)
+            /*
+            using (var m = new MemoryStream())
+            using (var c = new CryptoStream(m,
+                new AesCryptoServiceProvider
                 {
-                    foreach (var type in this._assembly.MainModule.Types)
-                    {
-                        foreach (var m in type.Methods)
-                        {
-                            if(script.Patch(m))
-                            {
-                                Debug.WriteLine($"Applied script: {script.Name}");
-                            }
-                        }
-                    }
+                    KeySize = 256,
+                    Key = Encoding.ASCII.GetBytes(new WMIProvider(WMISubject.Win32_BIOS)["BiosCharacteristics"].Replace(", ", null).Substring(0, 32)),
+                    IV = Encoding.ASCII.GetBytes(new WMIProvider(WMISubject.Win32_ComputerSystemProduct)["UUID"].Replace("-", null).Substring(16))
                 }
-                
-            }
-
-            void IDisposable. Dispose()
+                .CreateEncryptor(), CryptoStreamMode.Write))
             {
-                this._assembly.Write(this._file);
-            }
+                var bytes = Encoding.UTF8.GetBytes(raw);
+                c.Write(bytes, 0, bytes.Length);
+                c.FlushFinalBlock();
+                return Convert.ToBase64String(m.ToArray());
+            }*/
         }
+        private const string NS = nameof(ProtectedAttribute);
 
-        public abstract class HydraScript
+
+        protected override bool IsMatch(MethodDefinition m, Carried carried)
         {
-            public string Name { get; }
-
-            protected HydraScript(string name)
+            foreach (var a in m.CustomAttributes)
             {
-                if (string.IsNullOrWhiteSpace(name))
-                    throw new ArgumentNullException(nameof(name));
-                this.Name = name;
-            }
-
-            protected abstract void PatchMethod(MethodDefinition m, ICarried carried);
-
-            protected abstract bool IsMatch(MethodDefinition m, Carried carried);
-
-            public bool Patch(MethodDefinition method)
-            {
-                var carried = new Carried();
-                if(this.IsMatch(method, carried))
+                if (a.AttributeType.Name.Equals(NS) &&
+                     m.HasBody &&
+                     m.Body.Instructions.Any(inst => inst.OpCode == OpCodes.Ldstr))
                 {
-                    this.PatchMethod(method, carried);
-                    return true;
-                }
-                return false;
-            }
-        }
-
-
-        public interface ICarried
-        {
-            T Get<T>(string name);
-        }
-        public sealed class Carried : ICarried
-        {
-            internal Carried()
-            {
-                this._carried = new Dictionary<string, object>();
-            }
-            private readonly Dictionary<string, object> _carried;
-            public void Carry(string name, object value)
-            {
-                lock (this._carried)
-                {
-                    this._carried[name] = value;
-                }
-            }
-
-            T ICarried.Get<T>(string name)
-            {
-                return (T)this._carried[name];
-            }
-            
-        }
-
-        /// <summary>
-        /// 輪盤
-        /// </summary>
-        public class Roulette
-        {
-            private SecureString _holder;
-            public Roulette(SecureString salt)
-            {
-                this._holder = salt;
-            }
-
-            public void Encrypt(string value)
-            {
-
-            }
-        }
-
-        public class PatchString : HydraScript
-        {
-
-            public PatchString():base("Patch string")
-            {
-                /*
-                using (var m = new MemoryStream())
-                using (var c = new CryptoStream(m,
-                    new AesCryptoServiceProvider
-                    {
-                        KeySize = 256,
-                        Key = Encoding.ASCII.GetBytes(new WMIProvider(WMISubject.Win32_BIOS)["BiosCharacteristics"].Replace(", ", null).Substring(0, 32)),
-                        IV = Encoding.ASCII.GetBytes(new WMIProvider(WMISubject.Win32_ComputerSystemProduct)["UUID"].Replace("-", null).Substring(16))
-                    }
-                    .CreateEncryptor(), CryptoStreamMode.Write))
-                {
-                    var bytes = Encoding.UTF8.GetBytes(raw);
-                    c.Write(bytes, 0, bytes.Length);
-                    c.FlushFinalBlock();
-                    return Convert.ToBase64String(m.ToArray());
-                }*/
-            }
-            private const string NS = nameof(ProtectedAttribute);
-            
-
-            protected override bool IsMatch(MethodDefinition m, Carried carried)
-            {
-                foreach (var a in m.CustomAttributes)
-                {
-                    if(a.AttributeType.Name.Equals(NS) &&
-                         m.HasBody && 
-                         m.Body.Instructions.Any(inst => inst.OpCode == OpCodes.Ldstr))
-                    {
-                        carried.Carry("cache", a);
-                        return true;
-                    }
-                }
-
-                return false;
-            }
-
-            protected override void PatchMethod(MethodDefinition m, ICarried carried)
-            {
-                var attr = carried.Get<CustomAttribute>("cache");
-
-                for (var index = default(int); index < m.Body.Instructions.Count; index++)
-                {
-                    if (m.Body.Instructions[index].OpCode == OpCodes.Ldstr)
-                    {
-                        var origin = m.Body.Instructions[index].Operand as string;
-
-                        //
-                        //var encrypted = 
-                    }
-                }
-
-                m.CustomAttributes.Remove(attr);
-            }
-
-        }
-        
-
-
-        private delegate bool MatchEvaluate(CustomAttribute attribute);
-
-        /// <summary>
-        /// 檢查函式有 <see cref="ProtectedAttribute"/> 標籤
-        /// </summary>
-        /// <param name="method"></param>
-        /// <param name="attribute"></param>
-        /// <returns></returns>
-        private static bool HasProtectedToken(MethodDefinition method, MatchEvaluate evaluate, out CustomAttribute attribute)
-        {
-            foreach (var attr in method.CustomAttributes)
-            {
-                if(evaluate(attr))
-                {
-                    attribute = attr;
+                    carried.Carry("cache", a);
                     return true;
                 }
             }
-            attribute = null;
+
             return false;
         }
+
+        protected override void PatchMethod(MethodDefinition m, ICarried carried)
+        {
+            var attr = carried.Get<CustomAttribute>("cache");
+
+            for (var index = default(int); index < m.Body.Instructions.Count; index++)
+            {
+                if (m.Body.Instructions[index].OpCode == OpCodes.Ldstr)
+                {
+                    var origin = m.Body.Instructions[index].Operand as string;
+
+                    //
+                    //var encrypted = 
+                }
+            }
+
+            m.CustomAttributes.Remove(attr);
+        }
+
     }
 
     public static class Recover
