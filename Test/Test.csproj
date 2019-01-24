@@ -52,9 +52,6 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
-    <Reference Include="Yumiko.SelfProtection">
-      <HintPath>..\Yumiko.SelfProtection\bin\Debug\Yumiko.SelfProtection.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
@@ -63,6 +60,12 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Yumiko.SelfProtection\Yumiko.SelfProtection.csproj">
+      <Project>{27585bb4-5a29-4154-b3e7-df9e39bd9ee0}</Project>
+      <Name>Yumiko.SelfProtection</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
