@@ -7,47 +7,12 @@ namespace Yumiko.SelfProtection.Infrastructure
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Globalization;
+    using System.Linq;
     using System.Management;
-    using System.Text;
+    using System.Threading;
+    using System.Threading.Tasks;
     using Yumiko.SelfProtection.Infrastructure.Contract;
-
-    internal static class WmiHelper
-    {
-
-
-        public static string DebugString(object value)
-        {
-            if(value is IList list)
-            {
-                const string COMMA = ",";
-                switch (list.Count)
-                {
-                    case 0: return string.Empty;
-                    case 1: return list[0]?.ToString();
-                    case 2: return list[0]?.ToString() + COMMA + list[1]?.ToString();
-                    case 3: return list[0]?.ToString() + COMMA + list[1]?.ToString() + COMMA + list[2]?.ToString();
-                    default:
-                        {
-                            var sb = new StringBuilder(list[0]?.ToString());
-                            for (int i = 1; i < list.Count; i++)
-                            {
-                                sb.Append(COMMA).Append(list[i]?.ToString());
-
-                            }
-                            return sb.ToString();
-                        }
-
-                }
-
-            }
-            else
-            {
-                return value?.ToString() ?? string.Empty;
-            }
-
-        }
-
-    }
+    using Yumiko.SelfProtection.Infrastructure.Internal;
 
 
     /// <summary>
@@ -101,9 +66,21 @@ namespace Yumiko.SelfProtection.Infrastructure
 
             DateTime ToDateTime(string fmt)
             {
-                return DateTime.ParseExact(fmt,
-                       "yyyyMMddHHmmss.ffffff+000",
-                       CultureInfo.InvariantCulture);
+                 if (DateTime.TryParseExact(fmt
+                    , "yyyyMMddHHmmss.ffffff+000"
+                    , CultureInfo.InvariantCulture
+                    , DateTimeStyles.None
+                    , out var dt))
+                    return dt;
+                 
+                if (DateTime.TryParseExact(fmt.Remove(fmt.Length - 4)
+                    , "yyyyMMddHHmmss.ffffff"
+                    , CultureInfo.InvariantCulture
+                    , DateTimeStyles.None
+                    , out dt))
+                    return dt;
+
+                throw new InvalidCastException();
             }
         }
 
@@ -117,6 +94,11 @@ namespace Yumiko.SelfProtection.Infrastructure
             else if (isArray) return new T[0];
             return string.Empty;
         }
+        
+        public static async Task<IReadOnlyList<T>> GetAsync<T>(WmiSubject subject, ITranspiler<T> transpiler, bool localOnly = true, CancellationToken token = default(CancellationToken))
+        {
+            return await Task.Run(() => Get(subject, transpiler, localOnly), token);
+        }
 
         /// <summary>
         /// Gets the Windows Management Instrumentation (WMI) objects by subject.
@@ -126,14 +108,22 @@ namespace Yumiko.SelfProtection.Infrastructure
         /// <param name="transpiler">Uses the <seealso cref="Transpiler.Dynamic"/> or <seealso cref="Transpiler.ReadOnly"/> to get the value.</param>
         /// <param name="localOnly">finds only local fields.</param>
         /// <returns></returns>
-        public static IEnumerable<T> Get<T>(WmiSubject subject, ITranspiler<T> transpiler, bool localOnly = true)
+        public static IReadOnlyList<T> Get<T>(WmiSubject subject, ITranspiler<T> transpiler, bool localOnly = true)
         {
             var subj = subject.ToString().TrimStart('_');
-            Debug.WriteLine("Query: "+ subj);
-            var seacher = new ManagementObjectSearcher($"select * from Win32_{subj}");
 
-            foreach (ManagementObject mo in seacher.Get())
+            var collection = new ManagementObjectSearcher($"select * from Win32_{subj}").Get();
+#if DEBUG
+            Debug.WriteLine("# " + subj);
+            var fmt = WmiHelper.Formatter(collection.Count);
+            var i = 0;
+#endif
+            var list = new List<T>(collection.Count);
+            foreach (ManagementObject mo in collection)
             {
+#if DEBUG
+                i++;
+#endif
                 var dict = transpiler.Create();
                 try
                 {
@@ -143,7 +133,9 @@ namespace Yumiko.SelfProtection.Infrastructure
                         {
                             var name = pd.Name;
                             var value = Convert(pd.Type, pd.Value, pd.IsArray);
-                            Debug.WriteLine($"[{name}]: { WmiHelper.DebugString(value)  }");
+#if DEBUG
+                            Debug.WriteLine($"[{fmt(i)}{name}]: { WmiHelper.DebugString(value) }");
+#endif
                             dict.Add(name, value);
                         }
                         
@@ -151,11 +143,15 @@ namespace Yumiko.SelfProtection.Infrastructure
                 }
                 catch (Exception e)
                 {
+#if DEBUG
                     Debug.WriteLine(e);
+#endif
                     continue;
                 }
-                yield return transpiler.Convert(dict);
+                list.Add(transpiler.Convert(dict));
             }
+
+            return list;
         }
 
 

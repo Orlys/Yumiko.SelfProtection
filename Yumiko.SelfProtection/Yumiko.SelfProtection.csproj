@@ -56,6 +56,7 @@
     <Compile Include="Hydra\HydraCore.cs" />
     <Compile Include="Hydra\HydraScript.cs" />
     <Compile Include="Hydra\ICarried.cs" />
+    <Compile Include="Infrastructure\WmiHelper.cs" />
     <Compile Include="Script\ShellScript.cs" />
     <Compile Include="Strobarried\Evaluation.cs" />
     <Compile Include="Strobarried\Extension.cs" />
