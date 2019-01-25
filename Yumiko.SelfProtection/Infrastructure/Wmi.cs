@@ -117,7 +117,15 @@ namespace Yumiko.SelfProtection.Infrastructure
             else if (isArray) return new T[0];
             return string.Empty;
         }
-        
+
+        /// <summary>
+        /// Gets the Windows Management Instrumentation (WMI) objects by subject.
+        /// </summary>0
+        /// <typeparam name="T">Type of callback.</typeparam>
+        /// <param name="subject">The subject which you want to get.</param>
+        /// <param name="transpiler">Uses the <seealso cref="Transpiler.Dynamic"/> or <seealso cref="Transpiler.ReadOnly"/> to get the value.</param>
+        /// <param name="localOnly">finds only local fields.</param>
+        /// <returns></returns>
         public static IEnumerable<T> Get<T>(WmiSubject subject, ITranspiler<T> transpiler, bool localOnly = true)
         {
             var subj = subject.ToString().TrimStart('_');
