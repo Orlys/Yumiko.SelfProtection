@@ -81,11 +81,33 @@ namespace Test
                 }
             }
         }
-        
-        
+
+
 
         static partial void Run(string[] args)
-        { 
+        {
+            var dm = new System.Reflection.Emit.DynamicMethod("op", typeof(int), new[]{ typeof(int) , typeof(int) } );
+            var il = dm.GetILGenerator();
+            il.DeclareLocal(typeof(int));
+
+            il.Emit(System.Reflection.Emit.OpCodes.Ldc_I4_S, 50);
+            il.Emit(System.Reflection.Emit.OpCodes.Ldarg_0);
+            il.Emit(System.Reflection.Emit.OpCodes.Add);
+            il.Emit(System.Reflection.Emit.OpCodes.Stloc_0);
+
+
+
+            il.Emit(System.Reflection.Emit.OpCodes.Ldloc_0);
+            il.Emit(System.Reflection.Emit.OpCodes.Ldarg_1);
+            il.Emit(System.Reflection.Emit.OpCodes.Add);
+            il.Emit(System.Reflection.Emit.OpCodes.Ret);
+            dynamic d = dm.CreateDelegate(typeof(Func<int, int, int>));
+
+            var ssr = d(10, 20);
+            Console.WriteLine(ssr);
+
+            return;
+
             var uid = Wmi.Get(WmiSubject.ComputerSystemProduct, Transpiler.Dynamic).First().UUID as string;
             var sn = Wmi.Get(WmiSubject.OperatingSystem, Transpiler.Dynamic).First().SerialNumber as string;
 
